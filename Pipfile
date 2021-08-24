@@ -27,6 +27,8 @@ wrapt = "==1.12.1"
 Django = "==3.2.6"
 PyYAML = "==5.4.1"
 mysqlclient = "*"
+flake8 = "*"
+black = "*"
 
 [dev-packages]
 
