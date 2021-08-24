@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 YEAR_LENGTH = 4
@@ -10,7 +12,7 @@ class SimpleNameModel(models.Model):
     attribute
     """
 
-    name = models.CharField(max_length=CHAR_LENGTH, primary_key=True)
+    name = models.CharField(max_length=CHAR_LENGTH, unique=True)
 
     def __str__(self):
         return self.name
@@ -51,12 +53,9 @@ class Title(models.Model):
 
     id = models.PositiveBigIntegerField(primary_key=True)
 
-    type = models.ForeignKey(
-        TitleType, null=True, on_delete=models.SET_NULL, db_column="type"
-    )
+    type = models.ForeignKey(TitleType, null=True, on_delete=models.SET_NULL)
 
-    primary_title = models.CharField(max_length=CHAR_LENGTH)
-    original_title = models.CharField(max_length=CHAR_LENGTH)
+    name = models.CharField(max_length=CHAR_LENGTH)
     is_adult = models.BooleanField(default=False)
 
     start_year = models.CharField(
@@ -72,7 +71,7 @@ class Title(models.Model):
     )
 
     def __str__(self):
-        return str(self.primary_title) + ", id=" + str(self.id)
+        return str(self.name) + ", id=" + str(self.id)
 
 
 class TitleName(models.Model):
@@ -84,21 +83,14 @@ class TitleName(models.Model):
 
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
     name = models.CharField(max_length=CHAR_LENGTH)
-
     region = models.CharField(max_length=CHAR_LENGTH, null=True, blank=True)
     language = models.CharField(max_length=CHAR_LENGTH, null=True, blank=True)
-
-    types = models.ManyToManyField(
-        TitleType, blank=True, related_name="types", db_column="titletype"
-    )
-    attributes = models.ManyToManyField(
-        TitleType, blank=True, related_name="attributes", db_column="attribute"
-    )
-
-    attributes = models.ManyToManyField(
-        TitleType, blank=True, related_name="attributes", db_column="attribute"
-    )
     is_original_title = models.BooleanField(default=True)
+
+    types = models.ManyToManyField(TitleType, blank=True, related_name="types")
+    attributes = models.ManyToManyField(
+        TitleType, blank=True, related_name="attributes"
+    )
 
 
 class Person(models.Model):
@@ -147,5 +139,46 @@ class Principal(models.Model):
 
     def __str__(self):
         person = self.person.name + " (" + str(self.person.id) + ")"
-        title = self.title.primary_title + " (" + str(self.title.id) + ")"
+        title = self.title.name + " (" + str(self.title.id) + ")"
         return person + " in " + title
+
+
+class Rating(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+
+    title = models.ForeignKey(Title, on_delete=models.CASCADE)
+
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(10)]
+    )
+
+
+class Review(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+
+    title = models.ForeignKey(Title, on_delete=models.CASCADE)
+
+    review = models.TextField()
+
+
+class Action(SimpleNameModel):
+    """
+    Specfies an action performed by a user
+    """
+
+
+class ActivityLog(models.Model):
+    user = user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+
+    title = models.ForeignKey(Title, on_delete=models.CASCADE)
+
+    action = models.ForeignKey(Action, on_delete=models.RESTRICT)
