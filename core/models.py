@@ -9,6 +9,7 @@ class SimpleNameModel(models.Model):
     Abstract DRY class for models which only need a primary_key name
     attribute
     """
+
     name = models.CharField(max_length=CHAR_LENGTH, primary_key=True)
 
     def __str__(self):
@@ -51,10 +52,7 @@ class Title(models.Model):
     id = models.PositiveBigIntegerField(primary_key=True)
 
     type = models.ForeignKey(
-        TitleType,
-        null=True,
-        on_delete=models.SET_NULL,
-        db_column="type"
+        TitleType, null=True, on_delete=models.SET_NULL, db_column="type"
     )
 
     primary_title = models.CharField(max_length=CHAR_LENGTH)
@@ -62,31 +60,19 @@ class Title(models.Model):
     is_adult = models.BooleanField(default=False)
 
     start_year = models.CharField(
-        max_length=YEAR_LENGTH,
-        null=True,
-        blank=True
+        max_length=YEAR_LENGTH, null=True, blank=True
     )
 
-    end_year = models.CharField(
-        max_length=YEAR_LENGTH,
-        null=True,
-        blank=True
-    )
+    end_year = models.CharField(max_length=YEAR_LENGTH, null=True, blank=True)
 
-    runtime_minutes = models.PositiveIntegerField(
-        null=True,
-        blank=True
-    )
+    runtime_minutes = models.PositiveIntegerField(null=True, blank=True)
 
     genres = models.ManyToManyField(
-        Genre,
-        blank=True,
-        related_name="genres",
-        db_column="genre"
+        Genre, blank=True, related_name="genres", db_column="genre"
     )
 
     def __str__(self):
-        return str(self.primary_title) + ', id=' + str(self.id)
+        return str(self.primary_title) + ", id=" + str(self.id)
 
 
 class TitleName(models.Model):
@@ -99,33 +85,18 @@ class TitleName(models.Model):
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
     name = models.CharField(max_length=CHAR_LENGTH)
 
-    region = models.CharField(
-        max_length=CHAR_LENGTH,
-        null=True,
-        blank=True
-    )
-    language = models.CharField(
-        max_length=CHAR_LENGTH,
-        null=True,
-        blank=True
-    )
+    region = models.CharField(max_length=CHAR_LENGTH, null=True, blank=True)
+    language = models.CharField(max_length=CHAR_LENGTH, null=True, blank=True)
 
     types = models.ManyToManyField(
-        TitleType, blank=True,
-        related_name="types",
-        db_column="titletype"
+        TitleType, blank=True, related_name="types", db_column="titletype"
     )
     attributes = models.ManyToManyField(
-        TitleType, blank=True,
-        related_name="attributes",
-        db_column="attribute"
+        TitleType, blank=True, related_name="attributes", db_column="attribute"
     )
 
     attributes = models.ManyToManyField(
-        TitleType,
-        blank=True,
-        related_name="attributes",
-        db_column="attribute"
+        TitleType, blank=True, related_name="attributes", db_column="attribute"
     )
     is_original_title = models.BooleanField(default=True)
 
@@ -140,25 +111,19 @@ class Person(models.Model):
     id = models.PositiveBigIntegerField(primary_key=True)
     name = models.CharField(max_length=CHAR_LENGTH)
     birth_year = models.CharField(
-        max_length=YEAR_LENGTH,
-        null=True,
-        blank=True
+        max_length=YEAR_LENGTH, null=True, blank=True
     )
     death_year = models.CharField(
-        max_length=YEAR_LENGTH,
-        null=True,
-        blank=True
+        max_length=YEAR_LENGTH, null=True, blank=True
     )
     professions = models.ManyToManyField(
         Profession,
         blank=True,
         related_name="professions",
-        db_column="profession"
+        db_column="profession",
     )
     known_for_titles = models.ManyToManyField(
-        Title,
-        blank=True,
-        related_name="known_for_titles"
+        Title, blank=True, related_name="known_for_titles"
     )
 
     def __str__(self):
@@ -176,16 +141,11 @@ class Principal(models.Model):
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
     category = models.CharField(max_length=CHAR_LENGTH)
 
-    job = models.CharField(
-        max_length=CHAR_LENGTH,
-        null=True,
-        blank=True
-    )
+    job = models.CharField(max_length=CHAR_LENGTH, null=True, blank=True)
 
     characters = models.TextField(null=True, blank=True)
 
     def __str__(self):
         person = self.person.name + " (" + str(self.person.id) + ")"
-        title = self.title.primary_title + " (" + \
-            str(self.title.id) + ")"
+        title = self.title.primary_title + " (" + str(self.title.id) + ")"
         return person + " in " + title

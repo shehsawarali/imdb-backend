@@ -1,21 +1,15 @@
 from django.contrib import admin
 
 from .models import (
-    Title,
-    TitleName,
-    TitleType,
+    Genre,
     Person,
     Principal,
     Profession,
-    Genre,
+    Title,
+    TitleName,
+    TitleType,
 )
 
-admin.site.register([
-    Title,
-    TitleName,
-    TitleType,
-    Person,
-    Principal,
-    Profession,
-    Genre
-])
+admin.site.register(
+    [Title, TitleName, TitleType, Person, Principal, Profession, Genre]
+)
