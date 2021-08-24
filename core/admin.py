@@ -1,3 +1,21 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import (
+    Title,
+    TitleName,
+    TitleType,
+    Person,
+    Principal,
+    Profession,
+    Genre,
+)
+
+admin.site.register([
+    Title,
+    TitleName,
+    TitleType,
+    Person,
+    Principal,
+    Profession,
+    Genre
+])
