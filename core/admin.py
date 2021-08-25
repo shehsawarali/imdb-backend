@@ -1,6 +1,11 @@
 from django.contrib import admin
 
-from .forms import OptimizeForeignKeyForm
+from .model_admins import (
+    ActivityLogAdmin,
+    PrincipalAdmin,
+    RatingAdmin,
+    ReviewAdmin,
+)
 from .models import (
     Action,
     ActivityLog,
@@ -15,15 +20,11 @@ from .models import (
     TitleType,
 )
 
-
-class OptimizeForeignKeyAdmin(admin.ModelAdmin):
-    form = OptimizeForeignKeyForm
-
-
 admin.site.register(
     [Title, TitleName, TitleType, Person, Profession, Genre, Action]
 )
 
-admin.site.register(
-    [Principal, Rating, Review, ActivityLog], OptimizeForeignKeyAdmin
-)
+admin.site.register(Rating, RatingAdmin)
+admin.site.register(Review, ReviewAdmin)
+admin.site.register(Principal, PrincipalAdmin)
+admin.site.register(ActivityLog, ActivityLogAdmin)

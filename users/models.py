@@ -5,6 +5,10 @@ from django_countries.fields import CountryField
 
 
 class UserManager(BaseUserManager):
+    """
+    Manager for custom user model, to create users and superusers using email
+    """
+
     def _create_user(self, email, password, **extra_fields):
         if not email:
             raise ValueError("The given email must be set")
@@ -31,6 +35,11 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractUser):
+    """
+    Custom user model. Removes username, first_name, and last_name fields
+    inherited form AbstractUser class.
+    """
+
     username = None
     first_name = None
     last_name = None

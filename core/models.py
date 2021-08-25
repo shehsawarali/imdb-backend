@@ -8,8 +8,8 @@ CHAR_LENGTH = 255
 
 class SimpleNameModel(models.Model):
     """
-    Abstract DRY class for models which only need a primary_key name
-    attribute
+    Abstract DRY class for models which only need a unique string
+    attribute 'name'
     """
 
     name = models.CharField(max_length=CHAR_LENGTH, unique=True)
@@ -96,7 +96,7 @@ class TitleName(models.Model):
 class Person(models.Model):
     """
     Person model, for information of people/performers. Stores integer
-    attribute 'person_id' as primary key. References Profession and
+    attribute 'id' as primary key. References Profession and
     Title as foreign_key.
     """
 
@@ -144,6 +144,12 @@ class Principal(models.Model):
 
 
 class Rating(models.Model):
+    """
+    Rating model, specifying each rating submitted in the system by any user.
+    Stores auto id as primary_key. References settings.AUTH_USER_MODEL and
+    Title as foreign keys.
+    """
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -157,6 +163,12 @@ class Rating(models.Model):
 
 
 class Review(models.Model):
+    """
+    Rating model, specifying each review submitted in the system by any user.
+    Stores auto id as primary_key. References settings.AUTH_USER_MODEL and
+    Title as foreign keys.
+    """
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -174,6 +186,12 @@ class Action(SimpleNameModel):
 
 
 class ActivityLog(models.Model):
+    """
+    ActivityLog model, to store every action performed by user on a title.
+    Stores auto id as primary_key. References settings.AUTH_USER_MODEL,
+    Title and Action as foreign keys.
+    """
+
     user = user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
