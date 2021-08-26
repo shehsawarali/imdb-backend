@@ -130,3 +130,6 @@ dmypy.json
 
 /media/tsvs
 *.tsv
+
+.idea
+.DS_Store
