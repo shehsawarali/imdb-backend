@@ -3,6 +3,8 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django_countries.fields import CountryField
 
+CHAR_LENGTH = 255
+
 
 class UserManager(BaseUserManager):
     """
@@ -41,16 +43,17 @@ class User(AbstractUser):
     """
 
     username = None
-    first_name = None
-    last_name = None
-
+    first_name = models.CharField(max_length=CHAR_LENGTH)
+    last_name = models.CharField(max_length=CHAR_LENGTH)
     email = models.EmailField(unique=True)
     country = CountryField()
     age = models.PositiveSmallIntegerField(validators=[MinValueValidator(18)])
     verified = models.BooleanField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["country", "age"]
+    REQUIRED_FIELDS = ["first_name", "last_name", "country", "age"]
 
     objects = UserManager()
 

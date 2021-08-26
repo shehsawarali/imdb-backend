@@ -1,8 +1,10 @@
 from django.core.validators import FileExtensionValidator
 from django.db import models
 
+from common.utils import TimestampsModelMixin
 
-class Tsv(models.Model):
+
+class Tsv(TimestampsModelMixin):
     """
     Tsv model, for uploaded .tsv files.
     Stores auto id as primary_key.

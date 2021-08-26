@@ -45,11 +45,12 @@ def open_file_and_call_parser(file):
             parse_principal(reader)
         else:
             logger.info("No method defined for parsing file %s", file_name)
+            raise ValueError
 
 
 def normalize_title(title_id):
     """
-    Converts title_id 'ttxxxxxxx' into an integer
+    Converts title_id `ttxxxxxxx` into an integer
 
     Args:
         title_id (): string variable containing title_id
@@ -69,15 +70,13 @@ def normalize_title(title_id):
 
 def normalize_person(person_id):
     """
-
-    Converts title_id 'nmxxxxxxx' into an integer
+    Converts title_id `nmxxxxxxx` into an integer
 
     Args:
         person_id (): string variable containing person_id
 
     Returns:
         person_id: integer variable containing person_id
-
     """
 
     if person_id is None or person_id == "\\N":
@@ -91,7 +90,6 @@ def normalize_person(person_id):
 
 def read_field_data(model_fields, row):
     """
-
     Matches data from .tsv row to its corresponding model field
 
     Args:
@@ -104,8 +102,8 @@ def read_field_data(model_fields, row):
     Returns:
         instance: dictionary which matches each model attribute to
         corresponding data read from row
-
     """
+
     filtered_fields = [field for field in model_fields if field != "skip"]
     instance = dict.fromkeys(filtered_fields, None)
 
@@ -118,15 +116,13 @@ def read_field_data(model_fields, row):
 
 def parse_basics(tsv_rows):
     """
-
-    Parses and saves Title according to 'title.basics.tsv'
+    Parses and saves title according to `title.basics.tsv`
 
     Args:
         tsv_rows (): List of rows in the uploaded tsv file
 
     Returns:
         None
-
     """
 
     model_fields = [
@@ -176,21 +172,20 @@ def parse_basics(tsv_rows):
 
             logger.info("Created Title %s", instance["id"])
         except (ValueError, TypeError, IntegrityError) as error:
-            logger.info("Error while creating Title %s", instance["id"])
-            logger.error(error)
+            logger.error(
+                "Error while creating Title %s", instance["id"], error
+            )
 
 
 def parse_akas(tsv_rows):
     """
-
-    Parses and saves TitleType according to 'title.akas.tsv'
+    Parses and saves TitleType according to `title.akas.tsv`
 
     Args:
         tsv_rows (): List of rows in the uploaded tsv file
 
     Returns:
         None
-
     """
 
     model_fields = [
@@ -210,6 +205,7 @@ def parse_akas(tsv_rows):
         instance = read_field_data(model_fields, row)
 
         instance["title"] = normalize_title(instance["title"])
+
         if TitleName.objects.filter(
             title=instance["title"], region=instance["region"]
         ).exists():
@@ -255,24 +251,20 @@ def parse_akas(tsv_rows):
             new_title_name.save()
             logger.info("Created TitleName %s", instance["title"])
         except (ValueError, TypeError, IntegrityError) as error:
-            logger.info(
-                "Error while creating TitleName %s",
-                instance["title"],
+            logger.error(
+                "Error while creating TitleName %s", instance["title"], error
             )
-            logger.error(error)
 
 
 def parse_name_basics(tsv_rows):
     """
-
-    Parses and saves Person according to 'name.basics.tsv'
+    Parses and saves Person according to `name.basics.tsv`
 
     Args:
         tsv_rows (): List of rows in the uploaded tsv file
 
     Returns:
         None
-
     """
 
     model_fields = [
@@ -290,6 +282,7 @@ def parse_name_basics(tsv_rows):
         instance = read_field_data(model_fields, row)
 
         instance["id"] = normalize_person(instance["id"])
+
         if Person.objects.filter(id=instance["id"]).exists():
             logger.info("Duplicate Person")
             continue
@@ -297,6 +290,7 @@ def parse_name_basics(tsv_rows):
         # 5th column of a row contains the list of professions
         if instance["professions"]:
             professions = instance["professions"].split(",")
+
             for index, profession in enumerate(professions):
                 professions[index], _ = Profession.objects.get_or_create(
                     name=profession
@@ -307,6 +301,7 @@ def parse_name_basics(tsv_rows):
         if instance["known_for_titles"]:
             titles = []
             temp_row = instance["known_for_titles"].split(",")
+
             for title in temp_row:
                 normalized_id = normalize_title(title)
                 if Title.objects.filter(id=normalized_id).exists():
@@ -327,21 +322,20 @@ def parse_name_basics(tsv_rows):
             new_person.save()
             logger.info("Created Person %s", instance["id"])
         except (ValueError, TypeError, IntegrityError) as error:
-            logger.info("Error while creating Person %s", instance["id"])
-            logger.error(error)
+            logger.error(
+                "Error while creating Person %s", instance["id"], error
+            )
 
 
 def parse_principal(tsv_rows):
     """
-
-    Parses and saves Principal according to 'title.principals.tsv'
+    Parses and saves Principal according to `title.principals.tsv`
 
     Args:
         tsv_rows (): List of rows in the uploaded tsv file
 
     Returns:
         None
-
     """
 
     model_fields = ["title", "skip", "person", "category", "job", "characters"]
@@ -384,9 +378,9 @@ def parse_principal(tsv_rows):
                 instance["person"],
             )
         except (ValueError, TypeError, IntegrityError) as error:
-            logger.info(
+            logger.error(
                 "Error while creating Principal for %s %s",
                 instance["title"],
                 instance["person"],
+                error,
             )
-            logger.error(error)

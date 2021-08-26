@@ -1,10 +1,11 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
 from .forms import UploadTSVForm
+from .helpers import open_file_and_call_parser
 from .models import Tsv
-from .parsing_functions import open_file_and_call_parser
 
 
 @require_http_methods(["POST", "GET"])
@@ -32,7 +33,11 @@ def upload_file_view(request):
         uploaded_file.activated = True
         uploaded_file.save()
 
-        open_file_and_call_parser(uploaded_file.file_name)
+        try:
+            open_file_and_call_parser(uploaded_file.file_name)
+            messages.success(request, "File successfully uploaded")
+        except ValueError:
+            messages.error(request, "Error: File not recognized")
 
     return render(
         request, "upload.html", {"form": form, "title": "Upload File"}
