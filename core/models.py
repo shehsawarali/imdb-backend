@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from common.utils import SimpleNameModel, TimestampsModelMixin
+from common.utils import BaseTimestampsModel, SimpleNameModel
 
 YEAR_LENGTH = 4
 CHAR_LENGTH = 255
@@ -37,7 +37,7 @@ class Profession(SimpleNameModel):
     pass
 
 
-class Title(TimestampsModelMixin):
+class Title(BaseTimestampsModel):
     """
     Title model, for basic information of every title. Stores integer
     attribute `id` as primary_key. References TitleType and Genre as
@@ -62,7 +62,7 @@ class Title(TimestampsModelMixin):
         return f"{self.name}, id={self.id}"
 
 
-class TitleName(TimestampsModelMixin):
+class TitleName(BaseTimestampsModel):
     """
     TitleName model, for storing different names for a Title.
     Stores auto id as primary_key. References Title and TitleType as
@@ -80,7 +80,7 @@ class TitleName(TimestampsModelMixin):
     )
 
 
-class Person(TimestampsModelMixin):
+class Person(BaseTimestampsModel):
     """
     Person model, for information of people/performers. Stores integer
     attribute `id` as primary key. References Profession and
@@ -109,7 +109,7 @@ class Person(TimestampsModelMixin):
         return f"{self.name}, id={self.id}"
 
 
-class Principal(TimestampsModelMixin):
+class Principal(BaseTimestampsModel):
     """
     Person model, for information of a Person's contribution in a
     Title. Stores auto id as primary_key References Title and
@@ -123,12 +123,12 @@ class Principal(TimestampsModelMixin):
     characters = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        person = f"{self.person.name} ({self.person.id}"
-        title = f"{self.title.name} ({self.title.id}"
+        person = f"{self.person.name} ({self.person.id})"
+        title = f"{self.title.name} ({self.title.id})"
         return f"{person} in {title}"
 
 
-class Rating(TimestampsModelMixin):
+class Rating(BaseTimestampsModel):
     """
     Rating model, specifying each rating submitted in the system by any user.
     Stores auto id as primary_key. References settings.AUTH_USER_MODEL and
@@ -145,7 +145,7 @@ class Rating(TimestampsModelMixin):
     )
 
 
-class Review(TimestampsModelMixin):
+class Review(BaseTimestampsModel):
     """
     Rating model, specifying each review submitted in the system by any user.
     Stores auto id as primary_key. References settings.AUTH_USER_MODEL and
@@ -168,7 +168,7 @@ class Action(SimpleNameModel):
     pass
 
 
-class ActivityLog(TimestampsModelMixin):
+class ActivityLog(BaseTimestampsModel):
     """
     ActivityLog model, to store every action performed by user on a title.
     Stores auto id as primary_key. References settings.AUTH_USER_MODEL,

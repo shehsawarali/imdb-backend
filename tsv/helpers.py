@@ -203,7 +203,6 @@ def parse_akas(tsv_rows):
 
     for row in tsv_rows:
         instance = read_field_data(model_fields, row)
-
         instance["title"] = normalize_title(instance["title"])
 
         if TitleName.objects.filter(
@@ -280,7 +279,6 @@ def parse_name_basics(tsv_rows):
 
     for row in tsv_rows:
         instance = read_field_data(model_fields, row)
-
         instance["id"] = normalize_person(instance["id"])
 
         if Person.objects.filter(id=instance["id"]).exists():
@@ -342,7 +340,6 @@ def parse_principal(tsv_rows):
 
     for row in tsv_rows:
         instance = read_field_data(model_fields, row)
-
         instance["title"] = normalize_title(instance["title"])
         instance["person"] = normalize_person(instance["person"])
 

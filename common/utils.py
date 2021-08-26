@@ -3,7 +3,7 @@ from django.db import models
 CHAR_LENGTH = 255
 
 
-class TimestampsModelMixin(models.Model):
+class BaseTimestampsModel(models.Model):
     """
     Abstract model for models which require creation and update timestamps
     """
