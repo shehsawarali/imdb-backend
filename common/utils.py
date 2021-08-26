@@ -4,6 +4,10 @@ CHAR_LENGTH = 255
 
 
 class TimestampsModelMixin(models.Model):
+    """
+    Abstract model for models which require creation and update timestamps
+    """
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -13,7 +17,7 @@ class TimestampsModelMixin(models.Model):
 
 class SimpleNameModel(models.Model):
     """
-    Abstract DRY class for models which only need a unique string
+    Abstract model for models which only need a unique string
     attribute `name`
     """
 
