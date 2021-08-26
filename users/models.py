@@ -49,7 +49,6 @@ class User(AbstractUser):
     country = CountryField()
     age = models.PositiveSmallIntegerField(validators=[MinValueValidator(18)])
     verified = models.BooleanField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     USERNAME_FIELD = "email"
