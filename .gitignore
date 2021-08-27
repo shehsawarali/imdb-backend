@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+/media/tsvs
+*.tsv
+
+.idea
+.DS_Store
