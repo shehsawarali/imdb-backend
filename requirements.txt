@@ -7,7 +7,10 @@ cfgv==3.3.0
 click==8.0.1
 distlib==0.3.2
 Django==3.2.6
+django-cors-headers==3.8.0
 django-countries==7.2.1
+django-model-utils==4.1.1
+djangorestframework==3.12.4
 filelock==3.0.12
 flake8==3.9.2
 identify==2.2.13
