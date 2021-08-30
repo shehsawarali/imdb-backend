@@ -4,12 +4,12 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-from .views import LoginAPI, RegistrationAPI, VerifySession
+from .views import Login, Registration, VerifySession
 
 urlpatterns = [
-    path("login/", LoginAPI.as_view()),
+    path("login/", Login.as_view()),
     path("session/", VerifySession.as_view()),
-    path("register/", RegistrationAPI.as_view()),
+    path("register/", Registration.as_view()),
     path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 ]
