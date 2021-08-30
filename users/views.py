@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .helpers import response_http_400
 from .models import User
-from .serializers import UserSerializer
+from .serializers import SignUpSerializer, UserSerializer
 
 
 class LoginAPI(APIView):
@@ -48,6 +48,33 @@ class LoginAPI(APIView):
                 "message": "Successfully logged in",
             }
         )
+
+
+class RegistrationAPI(APIView):
+    """
+    View for authenticating login requests from client. Requires `email` and
+    `password` attributes in request payload. Returns success message upon
+    successful registration. Otherwise, returns serializer error.
+    """
+
+    def post(self, request):
+        if not request.user.is_anonymous:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = SignUpSerializer(data=request.data)
+        if serializer.is_valid():
+            new_user = serializer.save()
+            if new_user:
+                return Response(
+                    {"message": "Successfully signed up"},
+                    status=status.HTTP_201_CREATED,
+                )
+
+        error_list = [
+            serializer.errors[error][0] for error in serializer.errors
+        ]
+        message = error_list[0].capitalize()
+        return response_http_400(message)
 
 
 class VerifySession(APIView):
