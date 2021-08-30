@@ -10,7 +10,7 @@ from .models import User
 from .serializers import SignUpSerializer, UserSerializer
 
 
-class LoginAPI(APIView):
+class Login(APIView):
     """
     View for authenticating login requests from client. Requires `email` and
     `password` attributes in request payload. Returns user object and
@@ -50,7 +50,7 @@ class LoginAPI(APIView):
         )
 
 
-class RegistrationAPI(APIView):
+class Registration(APIView):
     """
     View for authenticating login requests from client. Requires `email` and
     `password` attributes in request payload. Returns success message upon
