@@ -1,5 +1,7 @@
+from django.contrib.auth import authenticate
 from django_countries.serializers import CountryFieldMixin
 from rest_framework import serializers
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
 
@@ -24,9 +26,9 @@ class UserSerializer(serializers.ModelSerializer):
         ]
 
 
-class SignUpSerializer(serializers.ModelSerializer, CountryFieldMixin):
+class RegistrationSerializer(serializers.ModelSerializer, CountryFieldMixin):
     """
-    Serializer, for RegistrationAPI, to validate form data received from
+    Serializer, for Registration view, to validate form data received from
     client, and create new User instance upon successful validation.
     """
 
@@ -40,7 +42,9 @@ class SignUpSerializer(serializers.ModelSerializer, CountryFieldMixin):
             "country",
             "age",
         )
-        extra_kwargs = {"password": {"write_only": True}}
+        extra_kwargs = {
+            "password": {"write_only": True},
+        }
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)
@@ -49,3 +53,39 @@ class SignUpSerializer(serializers.ModelSerializer, CountryFieldMixin):
             instance.set_password(password)
         instance.save()
         return instance
+
+
+class LoginSerializer(serializers.ModelSerializer):
+    """
+    Serializer, for Login view, to validate form data received from
+    client. Returns user object and authentication tokens upon successful
+    login. Otherwise, raises an error.
+    """
+
+    class Meta:
+        model = User
+        fields = ["email", "password"]
+        extra_kwargs = {
+            "email": {"validators": []},
+            "password": {
+                "write_only": True,
+            },
+        }
+
+    def validate(self, data):
+        email = data.get("email", None)
+        password = data.get("password", None)
+
+        user = authenticate(email=email, password=password)
+        if not user:
+            raise serializers.ValidationError("Incorrect email or password")
+
+        serialized_user = UserSerializer(user)
+        refresh = RefreshToken.for_user(user)
+
+        return {
+            "user": serialized_user.data,
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "message": "Successfully logged in",
+        }

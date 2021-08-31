@@ -1,67 +1,75 @@
-from django.contrib.auth.models import update_last_login
+import logging
+
+from django.utils.decorators import method_decorator
+from django.views.decorators.debug import sensitive_post_parameters
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from .helpers import response_http_400
-from .models import User
-from .serializers import SignUpSerializer, UserSerializer
+from .serializers import (
+    LoginSerializer,
+    RegistrationSerializer,
+    UserSerializer,
+)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+REQUIRED_FIELDS_ERRORS = [
+    "This field may not be blank.",
+    "This field is required.",
+    '"" is not a valid choice.',
+]
+MISSING_REQUIRED_FIELDS = "Missing required fields."
 
 
 class Login(APIView):
     """
-    View for authenticating login requests from client. Requires `email` and
-    `password` attributes in request payload. Returns user object and
-    authentication tokens upon successful login. Otherwise, returns
-    appropriate error message.
+    View for authenticating login requests from client. Returns
+    validated_data from LoginSerializer upon successful registration.
+    Otherwise, returns the error raised by LoginSerializer
     """
+
+    @method_decorator(sensitive_post_parameters("password"))
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request):
         if not request.user.is_anonymous:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            email = request.data["email"]
-            password = request.data["password"]
-        except KeyError:
-            return response_http_400("Missing email or password")
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            return Response(serializer.validated_data)
 
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            return response_http_400("Account does not exist")
+        error_list = [
+            serializer.errors[error][0] for error in serializer.errors
+        ]
+        message = error_list[0].capitalize()
+        if message in REQUIRED_FIELDS_ERRORS:
+            message = MISSING_REQUIRED_FIELDS
 
-        if not user.check_password(password):
-            return response_http_400("Incorrect email or password")
-
-        serializer = UserSerializer(user)
-        refresh = RefreshToken.for_user(user)
-        update_last_login(None, user)
-
-        return Response(
-            {
-                "user": serializer.data,
-                "refresh": str(refresh),
-                "access": str(refresh.access_token),
-                "message": "Successfully logged in",
-            }
-        )
+        return response_http_400(message)
 
 
 class Registration(APIView):
     """
-    View for authenticating login requests from client. Requires `email` and
-    `password` attributes in request payload. Returns success message upon
-    successful registration. Otherwise, returns serializer error.
+    View for authenticating registration requests from client. Returns
+    success message upon successful registration. Otherwise, returns
+    the error raised by RegistrationSerializer
     """
+
+    @method_decorator(sensitive_post_parameters("password"))
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request):
         if not request.user.is_anonymous:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = SignUpSerializer(data=request.data)
+        serializer = RegistrationSerializer(data=request.data)
         if serializer.is_valid():
             new_user = serializer.save()
             if new_user:
@@ -74,14 +82,18 @@ class Registration(APIView):
             serializer.errors[error][0] for error in serializer.errors
         ]
         message = error_list[0].capitalize()
+        if message in REQUIRED_FIELDS_ERRORS:
+            message = MISSING_REQUIRED_FIELDS
+
         return response_http_400(message)
 
 
 class VerifySession(APIView):
     """
     View for verifying a received authentication token. Returns the
-    authenticated user's User object upon successful verification. If token
-    is invalid, automatically returns `HTTP 401 Unauthorized` error
+    authenticated user's serialized User instance upon successful
+    verification. If token is invalid, automatically returns `HTTP 401
+    Unauthorized` error
     """
 
     permission_classes = [IsAuthenticated]
