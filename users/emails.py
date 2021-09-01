@@ -8,12 +8,16 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
-from .utils import verification_token
+from .utils import password_reset_token, verification_token
 
 logger = logging.getLogger(__name__)
 
 
 def send_verification_email(user):
+    """
+    Generates a verifcation link and sends and email to the user
+    """
+
     try:
         token = verification_token.make_token(user)
         encoded_id = urlsafe_base64_encode(force_bytes(user.id))
@@ -22,6 +26,38 @@ def send_verification_email(user):
 
         email = EmailMessage(
             "Account Verification Link",
+            body,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+        )
+
+        email.content_subtype = "html"
+        email.send(fail_silently=False)
+        return None
+    except (
+        AttributeError,
+        TypeError,
+        SMTPException,
+        ConnectionRefusedError,
+        TemplateDoesNotExist,
+    ) as e:
+        logger.error("ERROR: SEND ACTIVATION EMAIL", e)
+        return "The server has encountered an error, please try again."
+
+
+def send_password_reset_email(user):
+    """
+    Generates a password reset link and sends and email to the user
+    """
+
+    try:
+        token = password_reset_token.make_token(user)
+        encoded_id = urlsafe_base64_encode(force_bytes(user.id))
+        link = f"{settings.FRONTEND_URL}reset/#id={encoded_id}&link={token}"
+        body = render_to_string("password-reset-email.html", {"link": link})
+
+        email = EmailMessage(
+            "Password Reset Link",
             body,
             settings.DEFAULT_FROM_EMAIL,
             [user.email],
