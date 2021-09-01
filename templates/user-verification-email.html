@@ -1,0 +1,24 @@
+{% extends 'email.html' %}
+
+{% block email %}
+    <strong style="font-weight: bold">Welcome to IMDb!</strong>
+    <p>Before using your account, you need to verify yourself using the
+        button below</p>
+
+    <a href="{{ link }}">
+        <button style="
+            background-color: #f5c518;
+            height: 4rem;
+            padding: 1rem 3rem;
+            border-radius: 10px;
+            border: none;
+            box-shadow: 1px 1px 1px #888888;"
+        >
+            Verify
+        </button>
+    </a>
+    <br/>
+
+    <p style="margin-top: 2rem">Or visit the following link:</p>
+    <a href={{ link }}>{{ link }}</a>
+{% endblock %}
