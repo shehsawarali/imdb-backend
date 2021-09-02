@@ -52,13 +52,8 @@ class RegistrationSerializer(serializers.ModelSerializer, CountryFieldMixin):
         }
 
     def create(self, validated_data):
-        password = validated_data.pop("password", None)
-        instance = self.Meta.model(**validated_data)
-        if password is not None:
-            instance.set_password(password)
-        instance.is_active = False
-        instance.save()
-        return instance
+        user = self.Meta.model.objects.create_user(**validated_data)
+        return user
 
 
 class LoginSerializer(serializers.ModelSerializer):
