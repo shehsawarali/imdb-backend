@@ -7,22 +7,20 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .emails import send_password_reset_email, send_verification_email
 from .helpers import response_http_400
+from .models import User
 from .serializers import (
     LoginSerializer,
     RegistrationSerializer,
+    ResetLinkSerializer,
+    ResetSerializer,
     UserSerializer,
+    VerificationSerializer,
 )
+from .utils import get_first_serializer_error
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-REQUIRED_FIELDS_ERRORS = [
-    "This field may not be blank.",
-    "This field is required.",
-    '"" is not a valid choice.',
-]
-MISSING_REQUIRED_FIELDS = "Missing required fields."
 
 
 class Login(APIView):
@@ -44,13 +42,8 @@ class Login(APIView):
         if serializer.is_valid():
             return Response(serializer.validated_data)
 
-        error_list = [
-            serializer.errors[error][0] for error in serializer.errors
-        ]
-        message = error_list[0].capitalize()
-        if message in REQUIRED_FIELDS_ERRORS:
-            message = MISSING_REQUIRED_FIELDS
-
+        message = get_first_serializer_error(serializer.errors)
+        message = message.capitalize()
         return response_http_400(message)
 
 
@@ -73,18 +66,18 @@ class Registration(APIView):
         if serializer.is_valid():
             new_user = serializer.save()
             if new_user:
+                send_verification_email(new_user)
                 return Response(
-                    {"message": "Successfully signed up"},
+                    {
+                        "message": "Successfully signed up! Please verify your"
+                        " account using the link sent to your email "
+                        "address."
+                    },
                     status=status.HTTP_201_CREATED,
                 )
 
-        error_list = [
-            serializer.errors[error][0] for error in serializer.errors
-        ]
-        message = error_list[0].capitalize()
-        if message in REQUIRED_FIELDS_ERRORS:
-            message = MISSING_REQUIRED_FIELDS
-
+        message = get_first_serializer_error(serializer.errors)
+        message = message.capitalize()
         return response_http_400(message)
 
 
@@ -101,3 +94,96 @@ class VerifySession(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response({"user": serializer.data})
+
+
+class AccountVerification(APIView):
+    """
+    View for verifying a received authentication token. Returns the
+    message returned by VerificationSerializer if the data is valid. If
+    data is invalid, returns the error raised by VerificationSerializer.
+    """
+
+    def post(self, request):
+        if not request.user.is_anonymous:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = VerificationSerializer(data=request.data)
+        if serializer.is_valid():
+            return Response(serializer.validated_data)
+
+        message = get_first_serializer_error(serializer.errors)
+        return response_http_400(message)
+
+
+class ForgotPassword(APIView):
+    """
+    View for handling password reset request from client. Returns an error
+    message if a user with given the email address does not exist, or if the
+    send_password_reset_email function throws an error. Returns a success
+    message otherwise.
+    """
+
+    def post(self, request):
+        try:
+            email = request.data.get("email")
+            user = User.objects.get(email=email)
+        except (KeyError, User.DoesNotExist):
+            return Response(
+                {
+                    "message": "Please reset your password using the link sent to "
+                    "your email address"
+                }
+            )
+
+        email_error = send_password_reset_email(user)
+        if email_error:
+            return Response(
+                {"message": email_error},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return Response(
+            {
+                "message": "Please reset your password using the link sent to "
+                "your email address"
+            }
+        )
+
+
+class ResetPassword(APIView):
+    """
+    View for resetting the user's password.
+    """
+
+    def post(self, request):
+        """
+        Requires `token` and `id` in the payload. Returns a success message
+        if the token and id are valid. Returns and error message otherwise.
+        """
+        if not request.user.is_anonymous:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = ResetLinkSerializer(data=request.data)
+        if serializer.is_valid():
+            return Response(serializer.validated_data)
+
+        message = get_first_serializer_error(serializer.errors)
+        return response_http_400(message)
+
+    def put(self, request):
+        """
+        Requires `token`, `id`, `password`, and `confirm_password` in the
+        payload. Returns a success message upon successful password reset.
+        Returns an error message otherwise.
+
+        The token and id must be valid to change the password.
+        """
+        if not request.user.is_anonymous:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = ResetSerializer(data=request.data)
+        if serializer.is_valid():
+            return Response(serializer.validated_data)
+
+        message = get_first_serializer_error(serializer.errors)
+        return response_http_400(message)
