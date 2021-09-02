@@ -16,7 +16,7 @@ MISSING_REQUIRED_FIELDS = "Missing required fields."
 class BaseUserTokenSerializer(serializers.Serializer):
     """
     Base serializer which receives a hashed `token` and a uidb64 as `id`.
-    parse_data() decodes the users_id and returns a tuple containg the
+    parse_data() decodes the users_id and returns a tuple containing the
     user_id and token
     """
 
@@ -35,10 +35,10 @@ class BaseUserTokenSerializer(serializers.Serializer):
 class VerificationTokenGenerator(PasswordResetTokenGenerator):
     """
     Token generator used to generate user verification links. The generated
-    hash value is dependent on `user.id` `user.verified` `login_timestamp`
+    hash value is dependent on `user.id` `user.is_active` `login_timestamp`
     and `timestamp`
 
-    The generated link becomes invalid if either of `user.id` `user.verified`
+    The generated link becomes invalid if either of `user.id` `user.is_active`
     `login_timestamp` change, or if the timestamp expires.
     """
 
@@ -49,11 +49,9 @@ class VerificationTokenGenerator(PasswordResetTokenGenerator):
             else user.last_login.replace(microsecond=0, tzinfo=None)
         )
 
-        verified_status = False if not user.verified else True
-
         return (
             str(user.pk)
-            + str(verified_status)
+            + str(user.is_active)
             + str(login_timestamp)
             + str(timestamp)
         )

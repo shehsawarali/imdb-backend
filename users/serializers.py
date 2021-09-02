@@ -1,4 +1,3 @@
-from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django_countries.serializers import CountryFieldMixin
 from rest_framework import serializers
@@ -29,7 +28,6 @@ class UserSerializer(serializers.ModelSerializer):
             "country",
             "age",
             "date_joined",
-            "verified",
         ]
 
 
@@ -58,6 +56,7 @@ class RegistrationSerializer(serializers.ModelSerializer, CountryFieldMixin):
         instance = self.Meta.model(**validated_data)
         if password is not None:
             instance.set_password(password)
+        instance.is_active = False
         instance.save()
         return instance
 
@@ -66,7 +65,7 @@ class LoginSerializer(serializers.ModelSerializer):
     """
     Serializer, for Login view, to validate form data received from
     client. Returns user object and authentication tokens upon successful
-    login. Otherwise, raises an error. If user is not verified, calls
+    login. Otherwise, raises an error. If user is not active, calls
     send_verification_email()
     """
 
@@ -84,11 +83,14 @@ class LoginSerializer(serializers.ModelSerializer):
         email = data.get("email", None)
         password = data.get("password", None)
 
-        user = authenticate(email=email, password=password)
-        if not user:
+        try:
+            user = User.objects.get(email=email)
+            if not user.check_password(password):
+                raise ValueError
+        except (ValueError, User.DoesNotExist):
             raise serializers.ValidationError("Incorrect email or password")
 
-        if not user.verified:
+        if not user.is_active:
             email_error = send_verification_email(user)
             if email_error:
                 raise serializers.ValidationError(email_error)
@@ -125,7 +127,7 @@ class VerificationSerializer(BaseUserTokenSerializer):
             raise serializers.ValidationError("Verification link is invalid")
 
         if verification_token.check_token(user, token):
-            user.verified = True
+            user.is_active = True
             user.save()
 
             return {
@@ -152,9 +154,6 @@ class ResetLinkSerializer(BaseUserTokenSerializer):
             raise serializers.ValidationError("Reset link is invalid")
 
         if password_reset_token.check_token(user, token):
-            user.verified = True
-            user.save()
-
             return {
                 "message": "Enter your new password",
             }
@@ -182,7 +181,7 @@ class ResetSerializer(serializers.ModelSerializer, BaseUserTokenSerializer):
 
     def validate(self, data):
         try:
-            user, token = self.parse_data(data)
+            user, _ = self.parse_data(data)
         except (KeyError, ValueError, OverflowError, User.DoesNotExist):
             raise serializers.ValidationError("Reset link is invalid")
 
