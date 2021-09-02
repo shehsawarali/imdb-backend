@@ -7,7 +7,10 @@ cfgv==3.3.0
 click==8.0.1
 distlib==0.3.2
 Django==3.2.6
+django-cors-headers==3.8.0
 django-countries==7.2.1
+djangorestframework==3.12.4
+djangorestframework-simplejwt==4.8.0
 filelock==3.0.12
 flake8==3.9.2
 identify==2.2.13
@@ -22,6 +25,7 @@ platformdirs==2.2.0
 pre-commit==2.14.0
 pycodestyle==2.7.0
 pyflakes==2.3.1
+PyJWT==2.1.0
 pylint==2.9.6
 pytz==2021.1
 PyYAML==5.4.1
