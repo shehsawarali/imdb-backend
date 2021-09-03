@@ -3,7 +3,11 @@ from django_countries.serializers import CountryFieldMixin
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .emails import send_verification_email
+from .emails import (
+    send_login_email,
+    send_password_changed_email,
+    send_verification_link,
+)
 from .models import User
 from .utils import (
     BaseUserTokenSerializer,
@@ -86,7 +90,8 @@ class LoginSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Incorrect email or password")
 
         if not user.is_active:
-            email_error = send_verification_email(user)
+            email_error = send_verification_link(user)
+            print(email_error)
             if email_error:
                 raise serializers.ValidationError(email_error)
 
@@ -98,6 +103,7 @@ class LoginSerializer(serializers.ModelSerializer):
         refresh = RefreshToken.for_user(user)
         serialized_user = UserSerializer(user)
         update_last_login(None, user)
+        send_login_email(user)
 
         return {
             "user": serialized_user.data,
@@ -188,6 +194,7 @@ class ResetSerializer(serializers.ModelSerializer, BaseUserTokenSerializer):
 
         user.set_password(password)
         user.save()
+        send_password_changed_email(user)
 
         return {
             "message": "Your password has been reset",

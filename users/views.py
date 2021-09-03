@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .emails import send_password_reset_email, send_verification_email
+from .emails import send_password_reset_link, send_registration_email
 from .helpers import response_http_400
 from .models import User
 from .serializers import (
@@ -67,7 +67,7 @@ class Registration(APIView):
         if serializer.is_valid():
             new_user = serializer.save()
             if new_user:
-                send_verification_email(new_user)
+                send_registration_email(new_user)
                 return Response(
                     {
                         "message": "Successfully signed up! Please verify your"
@@ -136,7 +136,7 @@ class ForgotPassword(APIView):
                 }
             )
 
-        email_error = send_password_reset_email(user)
+        email_error = send_password_reset_link(user)
         if email_error:
             return Response(
                 {"message": email_error},

@@ -1,18 +1,29 @@
-<div style="text-align: center">
-    <div style="
-        height: 5rem;
-        width: 100%;
-        background-color: #f5c518"
-    ></div>
+{% load static %}
 
-    <div style="margin: 2rem 0">
-        {% block email %}
-        {% endblock %}
+<head>
+    <link rel="stylesheet" href="{% static 'css/upload.css' %}">
+</head>
+
+<body>
+    <div style="text-align: center">
+        <div style="
+            height: 2rem;
+            width: 100%;
+            background-color: #f5c518"
+        ></div>
+
+        <div style="padding: 4rem 2rem;
+            background-color: #2f2e2e;
+            color: white;"
+        >
+            {% block email %}
+            {% endblock %}
+        </div>
+
+        <div style="
+            height: 2rem;
+            width: 100%;
+            background-color: #f5c518"
+        ></div>
     </div>
-
-    <div style="
-        height: 5rem;
-        width: 100%;
-        background-color: #f5c518"
-    ></div>
-</div>
+</body>

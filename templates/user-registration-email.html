@@ -1,6 +1,8 @@
 {% extends 'email.html' %}
 
 {% block email %}
+    <h2 style="font-weight: bold; text-decoration: underline;">Welcome to
+        IMDb!</h2>
     <p>Click on the button below to verify your account.</p>
 
     <a href="{{ link }}">
@@ -18,4 +20,7 @@
 
     <p style="margin-top: 2rem">Or visit the following link:</p>
     <a style="color: lightskyblue" href={{ link }}>{{ link }}</a>
+
+    <br/><br/>
+    <p>If you did not sign up to IMDb, then you can ignore this email.</p>
 {% endblock %}
