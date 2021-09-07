@@ -8,6 +8,7 @@ from .views import (
     AccountVerification,
     ForgotPassword,
     Login,
+    Logout,
     Registration,
     ResetPassword,
     VerifySession,
@@ -26,6 +27,7 @@ urlpatterns = [
     path(
         "reset-password/", ResetPassword.as_view(), name="user-reset-password"
     ),
+    path("logout/", Logout.as_view(), name="user-logout"),
     path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 ]

@@ -1,19 +1,10 @@
 {% extends 'email.html' %}
 
 {% block email %}
-    <strong style="font-weight: bold">Welcome to IMDb!</strong>
-    <p>Click on the button below to verify your account. If you did not
-        sign up to IMDb then you can ignore this email.</p>
+    <p>Click on the button below to verify your account.</p>
 
     <a href="{{ link }}">
-        <button style="
-            background-color: #f5c518;
-            height: 4rem;
-            padding: 1rem 3rem;
-            border-radius: 10px;
-            border: none;
-            box-shadow: 1px 1px 1px #888888;"
-        >
+        <button class="email-main-button">
             Verify
         </button>
     </a>

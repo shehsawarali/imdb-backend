@@ -1,19 +1,19 @@
 {% extends 'email.html' %}
 
 {% block email %}
-    <h2 class="email-heading">Reset Your Password</h2>
-    <p>
-        Click on the button below to reset your password. If you did not request a password reset then you can ignore
-        this email.
-    </p>
+    <h2 class="email-heading">Welcome to IMDb!</h2>
+    <p>Click on the button below to verify your account.</p>
 
     <a href="{{ link }}">
         <button class="email-main-button">
-            Reset Password
+            Verify
         </button>
     </a>
     <br/>
 
     <p style="margin-top: 2rem">Or visit the following link:</p>
     <a href={{ link }}>{{ link }}</a>
+
+    <br/><br/>
+    <p>If you did not sign up to IMDb, then you can ignore this email.</p>
 {% endblock %}

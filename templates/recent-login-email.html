@@ -1,0 +1,11 @@
+{% extends "email.html" %}
+
+{% block email %}
+    <div style="text-align: left">
+        <p>Dear user,</p>
+        <p>Your IMDb account was recently signed in at {{ timestamp }} UTC.</p>
+
+        <br/><br/>
+        <p>If this was not you, please change your account credentials immediately.</p>
+    </div>
+{% endblock %}

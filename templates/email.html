@@ -1,18 +1,19 @@
-<div style="text-align: center">
-    <div style="
-        height: 5rem;
-        width: 100%;
-        background-color: #f5c518"
-    ></div>
+{% load inlinecss %}
+{% inlinecss "css/email.css" %}
 
-    <div style="margin: 2rem 0">
+<head>
+
+</head>
+
+<body>
+    <div class="email-header-footer"></div>
+
+    <div class="email-body">
         {% block email %}
         {% endblock %}
     </div>
 
-    <div style="
-        height: 5rem;
-        width: 100%;
-        background-color: #f5c518"
-    ></div>
-</div>
+    <div class="email-header-footer"></div>
+</body>
+
+{% endinlinecss %}

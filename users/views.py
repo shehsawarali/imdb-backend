@@ -6,8 +6,9 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from .emails import send_password_reset_email, send_verification_email
+from .emails import send_password_reset_link, send_registration_email
 from .helpers import response_http_400
 from .models import User
 from .serializers import (
@@ -18,7 +19,7 @@ from .serializers import (
     UserSerializer,
     VerificationSerializer,
 )
-from .utils import get_first_serializer_error
+from .utils import MISSING_REQUIRED_FIELDS, get_first_serializer_error
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +67,7 @@ class Registration(APIView):
         if serializer.is_valid():
             new_user = serializer.save()
             if new_user:
-                send_verification_email(new_user)
+                send_registration_email(new_user)
                 return Response(
                     {
                         "message": "Successfully signed up! Please verify your"
@@ -135,7 +136,7 @@ class ForgotPassword(APIView):
                 }
             )
 
-        email_error = send_password_reset_email(user)
+        email_error = send_password_reset_link(user)
         if email_error:
             return Response(
                 {"message": email_error},
@@ -187,3 +188,24 @@ class ResetPassword(APIView):
 
         message = get_first_serializer_error(serializer.errors)
         return response_http_400(message)
+
+
+class Logout(APIView):
+    """
+    View for blacklisting RefreshToken when user logs out
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh_token")
+            if not refresh_token:
+                raise KeyError
+        except KeyError:
+            return response_http_400(MISSING_REQUIRED_FIELDS)
+
+        token_object = RefreshToken(refresh_token)
+        token_object.blacklist()
+
+        return Response({"message": "Successfully signed out"})
