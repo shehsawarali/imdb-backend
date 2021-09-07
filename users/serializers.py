@@ -91,7 +91,6 @@ class LoginSerializer(serializers.ModelSerializer):
 
         if not user.is_active:
             email_error = send_verification_link(user)
-            print(email_error)
             if email_error:
                 raise serializers.ValidationError(email_error)
 
