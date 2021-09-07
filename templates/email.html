@@ -1,29 +1,19 @@
-{% load static %}
+{% load inlinecss %}
+{% inlinecss "css/email.css" %}
 
 <head>
-    <link rel="stylesheet" href="{% static 'css/upload.css' %}">
+
 </head>
 
 <body>
-    <div style="text-align: center">
-        <div style="
-            height: 2rem;
-            width: 100%;
-            background-color: #f5c518"
-        ></div>
+    <div class="email-header-footer"></div>
 
-        <div style="padding: 4rem 2rem;
-            background-color: #2f2e2e;
-            color: white;"
-        >
-            {% block email %}
-            {% endblock %}
-        </div>
-
-        <div style="
-            height: 2rem;
-            width: 100%;
-            background-color: #f5c518"
-        ></div>
+    <div class="email-body">
+        {% block email %}
+        {% endblock %}
     </div>
+
+    <div class="email-header-footer"></div>
 </body>
+
+{% endinlinecss %}

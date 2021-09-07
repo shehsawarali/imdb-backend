@@ -1,0 +1,32 @@
+body {
+    text-align: center;
+}
+
+.email-header-footer {
+    height: 2rem;
+    width: 100%;
+    background-color: #f5c518;
+}
+
+.email-body {
+    padding: 4rem 2rem;
+    background-color: #2f2e2e;
+    color: white;
+}
+
+.email-heading {
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.email-main-button {
+    background-color: #f5c518;
+    padding: 1rem 3rem;
+    border-radius: 10px;
+    border: none;
+    box-shadow: 1px 1px 1px #888888;
+}
+
+a {
+    color: lightskyblue
+}

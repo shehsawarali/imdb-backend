@@ -42,6 +42,7 @@ pyflakes = "==2.3.1"
 regex = "==2021.8.21"
 tomli = "==1.2.1"
 PyJWT = "==2.1.0"
+django-inlinecss = "*"
 
 [dev-packages]
 

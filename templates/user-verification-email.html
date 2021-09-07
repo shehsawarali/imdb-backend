@@ -4,18 +4,12 @@
     <p>Click on the button below to verify your account.</p>
 
     <a href="{{ link }}">
-        <button style="
-            background-color: #f5c518;
-            padding: 1rem 3rem;
-            border-radius: 10px;
-            border: none;
-            box-shadow: 1px 1px 1px #888888;"
-        >
+        <button class="email-main-button">
             Verify
         </button>
     </a>
     <br/>
 
     <p style="margin-top: 2rem">Or visit the following link:</p>
-    <a style="color: lightskyblue" href={{ link }}>{{ link }}</a>
+    <a href={{ link }}>{{ link }}</a>
 {% endblock %}
