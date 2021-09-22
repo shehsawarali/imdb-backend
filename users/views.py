@@ -1,25 +1,36 @@
 import logging
 
+from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.debug import sensitive_post_parameters
-from rest_framework import status
+from rest_framework import status, viewsets
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .emails import send_password_reset_link, send_registration_email
-from .helpers import response_http_400
+from .emails import (
+    send_password_changed_email,
+    send_password_reset_link,
+    send_registration_email,
+)
 from .models import User
 from .serializers import (
+    ChangePasswordSerializer,
+    FollowSerializer,
     LoginSerializer,
+    PasswordResetSerializer,
     RegistrationSerializer,
     ResetLinkSerializer,
-    ResetSerializer,
     UserSerializer,
     VerificationSerializer,
 )
-from .utils import MISSING_REQUIRED_FIELDS, get_first_serializer_error
+from .utils import (
+    MISSING_REQUIRED_FIELDS,
+    get_first_serializer_error,
+    response_http,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +56,7 @@ class Login(APIView):
 
         message = get_first_serializer_error(serializer.errors)
         message = message.capitalize()
-        return response_http_400(message)
+        return response_http(message, status.HTTP_400_BAD_REQUEST)
 
 
 class Registration(APIView):
@@ -68,18 +79,16 @@ class Registration(APIView):
             new_user = serializer.save()
             if new_user:
                 send_registration_email(new_user)
-                return Response(
-                    {
-                        "message": "Successfully signed up! Please verify your"
-                        " account using the link sent to your email "
-                        "address."
-                    },
-                    status=status.HTTP_201_CREATED,
+                return response_http(
+                    "Successfully signed up! Please verify "
+                    "your account using the link sent to your "
+                    "email address.",
+                    status.HTTP_201_CREATED,
                 )
 
         message = get_first_serializer_error(serializer.errors)
         message = message.capitalize()
-        return response_http_400(message)
+        return response_http(message, status.HTTP_400_BAD_REQUEST)
 
 
 class VerifySession(APIView):
@@ -113,7 +122,7 @@ class AccountVerification(APIView):
             return Response(serializer.validated_data)
 
         message = get_first_serializer_error(serializer.errors)
-        return response_http_400(message)
+        return response_http(message, status.HTTP_400_BAD_REQUEST)
 
 
 class ForgotPassword(APIView):
@@ -126,14 +135,13 @@ class ForgotPassword(APIView):
 
     def post(self, request):
         try:
-            email = request.data.get("email")
+            email = request.data["email"]
             user = User.objects.get(email=email)
         except (KeyError, User.DoesNotExist):
-            return Response(
-                {
-                    "message": "Please reset your password using the link sent to "
-                    "your email address"
-                }
+            return response_http(
+                "Please reset your password using the link sent"
+                "to your email address",
+                status.HTTP_200_OK,
             )
 
         email_error = send_password_reset_link(user)
@@ -143,11 +151,10 @@ class ForgotPassword(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        return Response(
-            {
-                "message": "Please reset your password using the link sent to "
-                "your email address"
-            }
+        return response_http(
+            "Please reset your password using the link sent"
+            "to your email address",
+            status.HTTP_200_OK,
         )
 
 
@@ -169,7 +176,7 @@ class ResetPassword(APIView):
             return Response(serializer.validated_data)
 
         message = get_first_serializer_error(serializer.errors)
-        return response_http_400(message)
+        return response_http(message, status.HTTP_400_BAD_REQUEST)
 
     def put(self, request):
         """
@@ -182,12 +189,12 @@ class ResetPassword(APIView):
         if not request.user.is_anonymous:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = ResetSerializer(data=request.data)
+        serializer = PasswordResetSerializer(data=request.data)
         if serializer.is_valid():
             return Response(serializer.validated_data)
 
         message = get_first_serializer_error(serializer.errors)
-        return response_http_400(message)
+        return response_http(message, status.HTTP_400_BAD_REQUEST)
 
 
 class Logout(APIView):
@@ -199,13 +206,122 @@ class Logout(APIView):
 
     def post(self, request):
         try:
-            refresh_token = request.data.get("refresh_token")
-            if not refresh_token:
-                raise KeyError
+            refresh_token = request.data["refresh_token"]
         except KeyError:
-            return response_http_400(MISSING_REQUIRED_FIELDS)
+            return response_http(
+                MISSING_REQUIRED_FIELDS, status.HTTP_400_BAD_REQUEST
+            )
 
         token_object = RefreshToken(refresh_token)
         token_object.blacklist()
 
-        return Response({"message": "Successfully signed out"})
+        return response_http("Successfully signed out", status.HTTP_200_OK)
+
+
+class UserViewSet(viewsets.ViewSet):
+    """
+    ViewSet for retrieving and updating public user information.
+    """
+
+    queryset = User.objects.all().prefetch_related("follows", "followers")
+
+    def retrieve(self, request, pk):
+        user = get_object_or_404(self.queryset, id=pk)
+        serializer = UserSerializer(user)
+
+        return Response({"profile": serializer.data})
+
+    def update(self, request, pk):
+        if not request.user.id == int(pk):
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        user = get_object_or_404(self.queryset, id=pk)
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"data": serializer.data})
+
+        message = get_first_serializer_error(serializer.errors)
+        return response_http(message, status.HTTP_400_BAD_REQUEST)
+
+
+class Follow(APIView):
+    """
+    View for following/unfollowing other users. POST method receives follow
+    requests, and DELETE method receives unfollow requests.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        user = get_object_or_404(User, id=pk)
+
+        if not user.id == request.user.id:
+            request.user.follows.add(user.id)
+            serializer = UserSerializer(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"message": "Followed"})
+
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        user = get_object_or_404(User, id=pk)
+
+        if not user.id == request.user.id:
+            request.user.follows.remove(user.id)
+            serializer = UserSerializer(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"message": "Unfollowed"})
+
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangePassword(APIView):
+    """
+    View for changing a user's password. This view requires the user to be
+    authenticated.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        serializer = ChangePasswordSerializer(request.user, data=request.data)
+        if serializer.is_valid():
+            new_password = request.data.get("new_password")
+            request.user.set_password(new_password)
+            request.user.save()
+            send_password_changed_email(request.user)
+            return Response({"message": "Password Changed"})
+
+        message = get_first_serializer_error(serializer.errors)
+        return response_http(message, status.HTTP_400_BAD_REQUEST)
+
+
+class UserFollowers(ListAPIView):
+    """
+    View for listing users who follow a particular user. This view will return
+    the complete list, but can be paginated using query params.
+    """
+
+    serializer_class = FollowSerializer
+
+    def get_queryset(self):
+        pk = self.kwargs["pk"]
+        user = User.objects.filter(id=pk).prefetch_related("followers").first()
+        return user.followers.all()
+
+
+class UserFollowing(ListAPIView):
+    """
+    View for listing users who are followed by a particular user. This view
+    will return the complete list, but can be paginated using query params.
+    """
+
+    serializer_class = FollowSerializer
+
+    def get_queryset(self):
+        pk = self.kwargs["pk"]
+        user = User.objects.filter(id=pk).prefetch_related("follows").first()
+        return user.follows.all()
