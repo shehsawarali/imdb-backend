@@ -53,10 +53,11 @@ class Title(BaseTimestampsModel):
     )
     end_year = models.CharField(max_length=YEAR_LENGTH, null=True, blank=True)
     runtime_minutes = models.PositiveIntegerField(null=True, blank=True)
-
     genres = models.ManyToManyField(
         Genre, blank=True, related_name="genres", db_column="genre"
     )
+    image = models.ImageField(upload_to="title", blank=True)
+    description = models.TextField(blank=True)
 
     def __str__(self):
         return f"{self.name}, id={self.id}"
@@ -104,6 +105,8 @@ class Person(BaseTimestampsModel):
     known_for_titles = models.ManyToManyField(
         Title, blank=True, related_name="known_for_titles"
     )
+    image = models.ImageField(upload_to="person", blank=True)
+    description = models.TextField(blank=True)
 
     def __str__(self):
         return f"{self.name}, id={self.id}"
@@ -116,11 +119,18 @@ class Principal(BaseTimestampsModel):
     Person as foreign_key.
     """
 
-    title = models.ForeignKey(Title, on_delete=models.CASCADE)
-    person = models.ForeignKey(Person, on_delete=models.CASCADE)
+    title = models.ForeignKey(
+        Title, on_delete=models.CASCADE, related_name="principals"
+    )
+    person = models.ForeignKey(
+        Person, on_delete=models.CASCADE, related_name="principals"
+    )
     category = models.CharField(max_length=CHAR_LENGTH)
     job = models.CharField(max_length=CHAR_LENGTH, null=True, blank=True)
     characters = models.TextField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-title__start_year", "-title__end_year"]
 
     def __str__(self):
         person = f"{self.person.name} ({self.person.id})"
@@ -138,8 +148,11 @@ class Rating(BaseTimestampsModel):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
+        related_name="ratings",
     )
-    title = models.ForeignKey(Title, on_delete=models.CASCADE)
+    title = models.ForeignKey(
+        Title, on_delete=models.CASCADE, related_name="ratings"
+    )
     rating = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)]
     )
@@ -155,8 +168,11 @@ class Review(BaseTimestampsModel):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
+        related_name="reviews",
     )
-    title = models.ForeignKey(Title, on_delete=models.CASCADE)
+    title = models.ForeignKey(
+        Title, on_delete=models.CASCADE, related_name="reviews"
+    )
     review = models.TextField()
 
 
@@ -175,9 +191,31 @@ class ActivityLog(BaseTimestampsModel):
     Title and Action as foreign keys.
     """
 
-    user = user = models.ForeignKey(
+    user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
     action = models.ForeignKey(Action, on_delete=models.RESTRICT)
+
+
+class Crew(models.Model):
+    """
+    Crew model, for directors and writers of a Title object. Stores auto id
+    as primary_key. References Title and Person as foreign keys.
+    """
+
+    title = models.OneToOneField(
+        Title, on_delete=models.CASCADE, related_name="crew"
+    )
+
+    directors = models.ManyToManyField(
+        Person, related_name="directors", blank=True
+    )
+
+    writers = models.ManyToManyField(
+        Person, related_name="writers", blank=True
+    )
+
+    class Meta:
+        verbose_name_plural = "crew"

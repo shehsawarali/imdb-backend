@@ -43,6 +43,7 @@ regex = "==2021.8.21"
 tomli = "==1.2.1"
 PyJWT = "==2.1.0"
 django-inlinecss = "*"
+pillow = "*"
 
 [dev-packages]
 
