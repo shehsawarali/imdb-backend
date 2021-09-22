@@ -42,7 +42,13 @@ pyflakes = "==2.3.1"
 regex = "==2021.8.21"
 tomli = "==1.2.1"
 PyJWT = "==2.1.0"
-django-inlinecss = "*"
+django-inlinecss = "==0.3.0"
+beautifulsoup4 = "==4.9.3"
+cssutils = "==2.3.0"
+django-model-utils = "==4.1.1"
+future = "==0.18.2"
+pynliner = "==0.8.0"
+soupsieve = "==2.2.1"
 
 [dev-packages]
 
