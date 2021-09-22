@@ -161,7 +161,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "localhost"
 EMAIL_PORT = 1025
-DEFAULT_FROM_EMAIL = "noreply@imdb.com"
+DEFAULT_FROM_EMAIL = "noreply@filmfilia.com"
 
 FRONTEND_URL = "http://localhost:3000/"
 

@@ -1,0 +1,21 @@
+{% extends 'email.html' %}
+
+{% block email %}
+    <h2 class="email-heading">Here are some titles you will love!</h2>
+
+    {% for title in titles %}
+        <div class="recommendation-title">
+
+            <a href="{{ FRONTEND_URL }}title/{{ title.id }}"
+               style="color: lightgray">
+                {{ title.name }}
+            </a>
+
+            <a href="{{ FRONTEND_URL }}title/{{ title.id }}"
+               style="color: lightgray">
+                {{ title.start_year }}
+            </a>
+        </div>
+
+    {% endfor %}
+{% endblock %}
