@@ -50,6 +50,9 @@ class User(AbstractUser):
     country = CountryField()
     age = models.PositiveSmallIntegerField(validators=[MinValueValidator(18)])
     updated_at = models.DateTimeField(auto_now=True)
+    follows = models.ManyToManyField(
+        "User", related_name="followers", blank=True
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name", "country", "age"]

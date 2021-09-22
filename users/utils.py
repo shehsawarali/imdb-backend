@@ -2,6 +2,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_text
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import serializers
+from rest_framework.response import Response
 
 from .models import User
 
@@ -72,3 +73,17 @@ def get_first_serializer_error(errors):
         message = MISSING_REQUIRED_FIELDS
 
     return message
+
+
+def response_http(message, status):
+    """
+    Takes a message and an HTTP status code, and returns an HTTP response
+    which can be sent to the client.
+    """
+
+    return Response(
+        {
+            "message": message,
+        },
+        status=status,
+    )

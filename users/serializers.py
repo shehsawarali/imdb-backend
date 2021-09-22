@@ -1,4 +1,8 @@
+import django.contrib.auth.password_validation as validators
+from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import update_last_login
+from django.core import exceptions
+from django_countries.serializer_fields import CountryField
 from django_countries.serializers import CountryFieldMixin
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -22,6 +26,8 @@ class UserSerializer(serializers.ModelSerializer):
     to client
     """
 
+    country = CountryField(country_dict=True)
+
     class Meta:
         model = User
         fields = [
@@ -32,6 +38,8 @@ class UserSerializer(serializers.ModelSerializer):
             "country",
             "age",
             "date_joined",
+            "follows",
+            "followers",
         ]
 
 
@@ -161,7 +169,9 @@ class ResetLinkSerializer(BaseUserTokenSerializer):
         raise serializers.ValidationError("Reset link is invalid or expired")
 
 
-class ResetSerializer(serializers.ModelSerializer, BaseUserTokenSerializer):
+class PasswordResetSerializer(
+    serializers.ModelSerializer, BaseUserTokenSerializer
+):
     """
     Serializer, for PUT method of ResetPassword view, to validate the
     password reset link used by the client, and change the corresponding
@@ -191,6 +201,11 @@ class ResetSerializer(serializers.ModelSerializer, BaseUserTokenSerializer):
         if password != confirm_password:
             raise serializers.ValidationError("Passwords do not match")
 
+        try:
+            validators.validate_password(password=password, user=User)
+        except exceptions.ValidationError:
+            raise serializers.ValidationError("Password is too short")
+
         user.set_password(password)
         user.save()
         send_password_changed_email(user)
@@ -198,3 +213,47 @@ class ResetSerializer(serializers.ModelSerializer, BaseUserTokenSerializer):
         return {
             "message": "Your password has been reset",
         }
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    """
+    Serializer, for UserFollowers and UserFollowing views, to serialize
+    every User object in the list
+    """
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+        ]
+
+
+class ChangePasswordSerializer(serializers.ModelSerializer):
+    """
+    Serializer, for ChangePassword view, to validate the old and new
+    passwords. Raises an error if the old_password is incorrect, or if the
+    new_password fails validation.
+    """
+
+    new_password = serializers.CharField(required=True)
+
+    class Meta:
+        model = User
+        fields = ["password", "new_password"]
+
+    def validate(self, data):
+        password = data.get("password")
+        new_password = data.get("new_password")
+
+        if not check_password(password, self.instance.password):
+            raise serializers.ValidationError("Incorrect password")
+
+        try:
+            validators.validate_password(password=new_password, user=User)
+        except exceptions.ValidationError:
+            raise serializers.ValidationError("Password is too short")
+
+        return True
