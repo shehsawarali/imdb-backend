@@ -12,10 +12,19 @@ class BasicTitleSerializer(serializers.ModelSerializer):
     """
 
     type = SimpleNameAndIdSerializer()
+    rating = serializers.DecimalField(max_digits=3, decimal_places=1)
 
     class Meta:
         model = Title
-        fields = ["id", "name", "start_year", "end_year", "image", "type"]
+        fields = [
+            "id",
+            "name",
+            "start_year",
+            "end_year",
+            "image",
+            "type",
+            "rating",
+        ]
 
 
 class BasicPersonSerializer(serializers.ModelSerializer):

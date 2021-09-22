@@ -1,4 +1,4 @@
-from django.db.models import Avg, Count, F
+from django.db.models import Avg, Count, F, Q
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 
@@ -60,6 +60,8 @@ class TitleSearch(ListAPIView):
         genres = query_params.getlist("genre")
         min_rating = query_params.get("min_rating")
         max_rating = query_params.get("max_rating")
+        min_year = query_params.get("min_year")
+        max_year = query_params.get("max_year")
 
         queryset = Title.objects.all().annotate(
             rating=Avg(F("ratings__rating"))
@@ -70,14 +72,18 @@ class TitleSearch(ListAPIView):
         else:
             queryset = queryset.order_by("-rating", "start_year")
 
-        if name is not None:
+        if name:
             queryset = queryset.filter(name__icontains=name)
         if genres:
             queryset = queryset.filter(genres__name__in=genres)
-        if min_rating is not None:
-            queryset = queryset.filter(rating__gte=-1)
-        if max_rating is not None:
+        if min_rating:
+            queryset = queryset.filter(rating__gte=min_rating)
+        if max_rating:
             queryset = queryset.filter(rating__lte=max_rating)
+        if min_year:
+            queryset = queryset.filter(start_year__gte=min_year)
+        if max_year:
+            queryset = queryset.filter(start_year__lte=max_year)
 
         return queryset
 
