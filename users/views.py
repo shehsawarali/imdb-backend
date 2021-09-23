@@ -5,6 +5,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.debug import sensitive_post_parameters
 from rest_framework import status, viewsets
 from rest_framework.generics import ListAPIView
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -25,6 +26,7 @@ from .serializers import (
     ResetLinkSerializer,
     UserSerializer,
     VerificationSerializer,
+    WatchlistSerializer,
 )
 from .utils import (
     MISSING_REQUIRED_FIELDS,
@@ -152,7 +154,7 @@ class ForgotPassword(APIView):
             )
 
         return response_http(
-            "Please reset your password using the link sent"
+            "Please reset your password using the link sent "
             "to your email address",
             status.HTTP_200_OK,
         )
@@ -325,3 +327,109 @@ class UserFollowing(ListAPIView):
         pk = self.kwargs["pk"]
         user = User.objects.filter(id=pk).prefetch_related("follows").first()
         return user.follows.all()
+
+
+class AvatarUpload(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        serializer = UserSerializer(
+            request.user, data=request.data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return response_http("Uploaded", status.HTTP_200_OK)
+
+        message = get_first_serializer_error(serializer.errors)
+        return response_http(message, status.HTTP_400_BAD_REQUEST)
+
+
+class Watchlist(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            query_params = self.request.query_params
+            id = query_params.get("id")
+
+            watchlist = request.user.watchlist
+            return Response(
+                {"is_watchlisted": watchlist.filter(id=id).exists()}
+            )
+        except (KeyError, ValueError):
+            return response_http(
+                MISSING_REQUIRED_FIELDS, status.HTTP_400_BAD_REQUEST
+            )
+
+    def post(self, request):
+        try:
+            id = request.data.get("id")
+            request.user.watchlist.add(id)
+            return response_http("Added to Watchlist", status.HTTP_200_OK)
+        except KeyError:
+            return response_http(
+                MISSING_REQUIRED_FIELDS, status.HTTP_400_BAD_REQUEST
+            )
+
+    def delete(self, request):
+        try:
+            id = request.data.get("id")
+            request.user.watchlist.remove(id)
+            return response_http("Removed from watchlist", status.HTTP_200_OK)
+        except KeyError:
+            return response_http(
+                MISSING_REQUIRED_FIELDS, status.HTTP_400_BAD_REQUEST
+            )
+
+
+class Favorite(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            query_params = self.request.query_params
+            id = query_params.get("id")
+
+            favorites = request.user.favorites
+            return Response({"is_favorite": favorites.filter(id=id).exists()})
+        except (KeyError, ValueError):
+            return response_http(
+                MISSING_REQUIRED_FIELDS, status.HTTP_400_BAD_REQUEST
+            )
+
+    def post(self, request):
+        try:
+            id = request.data.get("id")
+            request.user.favorites.add(id)
+            return response_http("Added to favorites", status.HTTP_200_OK)
+        except KeyError:
+            return response_http(
+                MISSING_REQUIRED_FIELDS, status.HTTP_400_BAD_REQUEST
+            )
+
+    def delete(self, request):
+        try:
+            id = request.data.get("id")
+            request.user.favorites.remove(id)
+            return response_http("Removed from favorites", status.HTTP_200_OK)
+        except KeyError:
+            return response_http(
+                MISSING_REQUIRED_FIELDS, status.HTTP_400_BAD_REQUEST
+            )
+
+
+class ListWatchlist(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = WatchlistSerializer
+
+    def get_queryset(self):
+        return self.request.user.watchlist.all()
+
+
+class ListFavorites(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = WatchlistSerializer
+
+    def get_queryset(self):
+        return self.request.user.favorites.all()

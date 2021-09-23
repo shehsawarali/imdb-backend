@@ -3,6 +3,8 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django_countries.fields import CountryField
 
+from core.models import Title
+
 CHAR_LENGTH = 255
 
 
@@ -53,6 +55,13 @@ class User(AbstractUser):
     follows = models.ManyToManyField(
         "User", related_name="followers", blank=True
     )
+    watchlist = models.ManyToManyField(
+        Title, blank=True, related_name="watchlist_set"
+    )
+    favorites = models.ManyToManyField(
+        Title, blank=True, related_name="favorites_set"
+    )
+    image = models.ImageField(upload_to="user", blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name", "country", "age"]

@@ -7,9 +7,13 @@ from rest_framework_simplejwt.views import (
 
 from .views import (
     AccountVerification,
+    AvatarUpload,
     ChangePassword,
+    Favorite,
     Follow,
     ForgotPassword,
+    ListFavorites,
+    ListWatchlist,
     Login,
     Logout,
     Registration,
@@ -18,6 +22,7 @@ from .views import (
     UserFollowing,
     UserViewSet,
     VerifySession,
+    Watchlist,
 )
 
 urlpatterns = [
@@ -32,6 +37,12 @@ urlpatterns = [
     path("<int:pk>/following/", UserFollowing.as_view(), name="following"),
     path("logout/", Logout.as_view(), name="logout"),
     path("follow/<int:pk>/", Follow.as_view(), name="follow"),
+    path("watchlist", Follow.as_view(), name="follow"),
+    path("favorite/", Favorite.as_view(), name="favorite"),
+    path("watchlist/", Watchlist.as_view(), name="watchlist"),
+    path("upload-image/", AvatarUpload.as_view(), name="upload-avatar"),
+    path("get-watchlist/", ListWatchlist.as_view(), name="list-watchlist"),
+    path("get-favorites/", ListFavorites.as_view(), name="list-favorites"),
     path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 ]
