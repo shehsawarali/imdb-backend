@@ -1,7 +1,14 @@
 from django.db import models
 from rest_framework import serializers
+from rest_framework.response import Response
 
 CHAR_LENGTH = 255
+REQUIRED_FIELDS_ERRORS = [
+    "This field may not be blank.",
+    "This field is required.",
+    '"" is not a valid choice.',  # for CountryField in User model
+]
+MISSING_REQUIRED_FIELDS = "Missing required fields."
 
 
 class BaseTimestampsModel(models.Model):
@@ -46,3 +53,30 @@ class SimpleNameAndIdSerializer(serializers.Serializer):
 
     id = serializers.IntegerField(required=True)
     name = serializers.CharField(required=True)
+
+
+def get_first_serializer_error(errors):
+    """
+    Receives serializer errors and returns the first error.
+    """
+
+    error_list = [errors[error][0] for error in errors]
+    message = error_list[0]
+    if message in REQUIRED_FIELDS_ERRORS:
+        message = MISSING_REQUIRED_FIELDS
+
+    return message
+
+
+def response_http(message, status):
+    """
+    Takes a message and an HTTP status code, and returns an HTTP response
+    which can be sent to the client.
+    """
+
+    return Response(
+        {
+            "message": message,
+        },
+        status=status,
+    )

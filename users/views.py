@@ -11,6 +11,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from common.utils import (
+    MISSING_REQUIRED_FIELDS,
+    get_first_serializer_error,
+    response_http,
+)
+
 from .emails import (
     send_password_changed_email,
     send_password_reset_link,
@@ -26,12 +32,6 @@ from .serializers import (
     ResetLinkSerializer,
     UserSerializer,
     VerificationSerializer,
-    WatchlistSerializer,
-)
-from .utils import (
-    MISSING_REQUIRED_FIELDS,
-    get_first_serializer_error,
-    response_http,
 )
 
 logger = logging.getLogger(__name__)
@@ -229,7 +229,7 @@ class UserViewSet(viewsets.ViewSet):
 
     def retrieve(self, request, pk):
         user = get_object_or_404(self.queryset, id=pk)
-        serializer = UserSerializer(user)
+        serializer = UserSerializer(user, context={"request": request})
 
         return Response({"profile": serializer.data})
 
@@ -330,6 +330,11 @@ class UserFollowing(ListAPIView):
 
 
 class AvatarUpload(APIView):
+    """
+    View for uploading User Avatar. Requires a single image file in a
+    `multipart/form-data` http request.
+    """
+
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
@@ -343,93 +348,3 @@ class AvatarUpload(APIView):
 
         message = get_first_serializer_error(serializer.errors)
         return response_http(message, status.HTTP_400_BAD_REQUEST)
-
-
-class Watchlist(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        try:
-            query_params = self.request.query_params
-            id = query_params.get("id")
-
-            watchlist = request.user.watchlist
-            return Response(
-                {"is_watchlisted": watchlist.filter(id=id).exists()}
-            )
-        except (KeyError, ValueError):
-            return response_http(
-                MISSING_REQUIRED_FIELDS, status.HTTP_400_BAD_REQUEST
-            )
-
-    def post(self, request):
-        try:
-            id = request.data.get("id")
-            request.user.watchlist.add(id)
-            return response_http("Added to Watchlist", status.HTTP_200_OK)
-        except KeyError:
-            return response_http(
-                MISSING_REQUIRED_FIELDS, status.HTTP_400_BAD_REQUEST
-            )
-
-    def delete(self, request):
-        try:
-            id = request.data.get("id")
-            request.user.watchlist.remove(id)
-            return response_http("Removed from watchlist", status.HTTP_200_OK)
-        except KeyError:
-            return response_http(
-                MISSING_REQUIRED_FIELDS, status.HTTP_400_BAD_REQUEST
-            )
-
-
-class Favorite(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        try:
-            query_params = self.request.query_params
-            id = query_params.get("id")
-
-            favorites = request.user.favorites
-            return Response({"is_favorite": favorites.filter(id=id).exists()})
-        except (KeyError, ValueError):
-            return response_http(
-                MISSING_REQUIRED_FIELDS, status.HTTP_400_BAD_REQUEST
-            )
-
-    def post(self, request):
-        try:
-            id = request.data.get("id")
-            request.user.favorites.add(id)
-            return response_http("Added to favorites", status.HTTP_200_OK)
-        except KeyError:
-            return response_http(
-                MISSING_REQUIRED_FIELDS, status.HTTP_400_BAD_REQUEST
-            )
-
-    def delete(self, request):
-        try:
-            id = request.data.get("id")
-            request.user.favorites.remove(id)
-            return response_http("Removed from favorites", status.HTTP_200_OK)
-        except KeyError:
-            return response_http(
-                MISSING_REQUIRED_FIELDS, status.HTTP_400_BAD_REQUEST
-            )
-
-
-class ListWatchlist(ListAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = WatchlistSerializer
-
-    def get_queryset(self):
-        return self.request.user.watchlist.all()
-
-
-class ListFavorites(ListAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = WatchlistSerializer
-
-    def get_queryset(self):
-        return self.request.user.favorites.all()

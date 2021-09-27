@@ -1,8 +1,9 @@
 from rest_framework import serializers
 
 from common.utils import SimpleNameAndIdSerializer, SimpleNameSerializer
+from users.serializers import UserSerializer
 
-from .models import Crew, Person, Principal, Title
+from .models import Crew, Person, Principal, Review, Title
 
 
 class BasicTitleSerializer(serializers.ModelSerializer):
@@ -12,7 +13,9 @@ class BasicTitleSerializer(serializers.ModelSerializer):
     """
 
     type = SimpleNameAndIdSerializer()
-    rating = serializers.DecimalField(max_digits=3, decimal_places=1)
+    rating = serializers.DecimalField(
+        max_digits=3, decimal_places=1, required=False
+    )
 
     class Meta:
         model = Title
@@ -136,3 +139,16 @@ class PersonSerializer(serializers.ModelSerializer):
             "image",
             "description",
         ]
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Review model, in TitleReviews view.
+    """
+
+    title = SimpleNameAndIdSerializer()
+    user = UserSerializer()
+
+    class Meta:
+        model = Review
+        fields = ["title", "review", "user"]

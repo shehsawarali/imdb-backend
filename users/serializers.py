@@ -7,8 +7,6 @@ from django_countries.serializers import CountryFieldMixin
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from core.models import Title
-
 from .emails import (
     send_login_email,
     send_password_changed_email,
@@ -255,9 +253,3 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Password is too short")
 
         return True
-
-
-class WatchlistSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Title
-        fields = ["id", "name", "start_year"]
