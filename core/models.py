@@ -130,7 +130,7 @@ class Principal(BaseTimestampsModel):
         Title, on_delete=models.CASCADE, related_name="principals"
     )
     person = models.ForeignKey(
-        Person, on_delete=models.CASCADE, related_name="principals"
+        Person, on_delete=models.CASCADE, related_name="filmography"
     )
     category = models.CharField(max_length=CHAR_LENGTH)
     job = models.CharField(max_length=CHAR_LENGTH, null=True, blank=True)

@@ -1,4 +1,4 @@
-from django.db.models import Avg, Count, F, Q
+from django.db.models import Count, F
 from rest_framework import status
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView, RetrieveAPIView
@@ -45,7 +45,7 @@ class PersonDetail(RetrieveAPIView):
     """
 
     queryset = Person.objects.all().prefetch_related(
-        "professions", "known_for_titles", "principals"
+        "professions", "known_for_titles", "filmography"
     )
     serializer_class = PersonSerializer
 
@@ -149,6 +149,13 @@ class Watchlist(APIView):
         try:
             title_id = request.data.get("id")
             request.user.watchlist.add(title_id)
+
+            ActivityLog.objects.create(
+                title_id=title_id,
+                user=request.user,
+                action="Added a title to their watchlist",
+            )
+
             return response_http("Added to Watchlist", status.HTTP_200_OK)
         except KeyError:
             return response_http(
@@ -164,8 +171,16 @@ class Watchlist(APIView):
             query_params = self.request.query_params
             title_id = query_params.get("id")
             request.user.watchlist.remove(title_id)
+
+            ActivityLog.objects.create(
+                title_id=title_id,
+                user=request.user,
+                action="Removed a title from their watchlist",
+            )
+
             return response_http("Removed from watchlist", status.HTTP_200_OK)
-        except KeyError:
+        except KeyError as e:
+            print(e)
             return response_http(
                 MISSING_REQUIRED_FIELDS, status.HTTP_400_BAD_REQUEST
             )
@@ -205,6 +220,13 @@ class Favorite(APIView):
         try:
             title_id = request.data.get("id")
             request.user.favorites.add(title_id)
+
+            ActivityLog.objects.create(
+                title_id=title_id,
+                user=request.user,
+                action="Added a title to their favorites",
+            )
+
             return response_http("Added to favorites", status.HTTP_200_OK)
         except KeyError:
             return response_http(
@@ -220,6 +242,13 @@ class Favorite(APIView):
             query_params = self.request.query_params
             title_id = query_params.get("id")
             request.user.favorites.remove(title_id)
+
+            ActivityLog.objects.create(
+                title_id=title_id,
+                user=request.user,
+                action="Removed a title from their favorites",
+            )
+
             return response_http("Removed from favorites", status.HTTP_200_OK)
         except KeyError:
             return response_http(
@@ -399,8 +428,10 @@ class Timeline(ListAPIView):
         following_list = list(following.values_list("id", flat=True))
         following_list.append(self.request.user.id)
 
-        queryset = ActivityLog.objects.filter(
-            user__id__in=following_list
-        ).order_by("-created_at")
+        queryset = (
+            ActivityLog.objects.filter(user__id__in=following_list)
+            .order_by("-created_at")
+            .prefetch_related("rating", "review", "title", "user")
+        )
 
         return queryset

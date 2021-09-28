@@ -56,7 +56,7 @@ class TitlePrincipalsSerializer(serializers.ModelSerializer):
         fields = ["person", "category", "characters"]
 
 
-class PersonPrincipalsSerializers(serializers.ModelSerializer):
+class PersonPrincipalsSerializer(serializers.ModelSerializer):
     """
     Serializer, for Principal model belonging to a specific Person instance.
     Does not include the redundant `Person` object in the serialized data.
@@ -122,7 +122,7 @@ class PersonSerializer(serializers.ModelSerializer):
 
     known_for_titles = BasicTitleSerializer(many=True)
     professions = SimpleNameSerializer(many=True)
-    principals = PersonPrincipalsSerializers(many=True)
+    filmography = PersonPrincipalsSerializer(many=True)
 
     class Meta:
         model = Person
@@ -133,7 +133,7 @@ class PersonSerializer(serializers.ModelSerializer):
             "death_year",
             "known_for_titles",
             "professions",
-            "principals",
+            "filmography",
             "image",
             "description",
         ]
