@@ -15,6 +15,7 @@ from .views import (
     Logout,
     Registration,
     ResetPassword,
+    UserActivity,
     UserFollowers,
     UserFollowing,
     UserViewSet,
@@ -34,6 +35,7 @@ urlpatterns = [
     path("logout/", Logout.as_view(), name="logout"),
     path("follow/<int:pk>/", Follow.as_view(), name="follow"),
     path("upload-image/", AvatarUpload.as_view(), name="upload-avatar"),
+    path("<int:pk>/activity/", UserActivity.as_view(), name="activity"),
     path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 ]

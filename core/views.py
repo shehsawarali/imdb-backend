@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError
 from django.db.models import Avg, Count, F, Q
 from rest_framework import status
 from rest_framework.filters import SearchFilter
@@ -7,13 +6,20 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.utils import MISSING_REQUIRED_FIELDS, response_http
+from common.utils import (
+    MISSING_REQUIRED_FIELDS,
+    get_first_serializer_error,
+    response_http,
+)
 
-from .models import Person, Rating, Review, Title
+from .models import ActivityLog, Person, Rating, Review, Title
 from .serializers import (
+    ActivitySerializer,
     BasicPersonSerializer,
     BasicTitleSerializer,
+    CreateReviewSerializer,
     PersonSerializer,
+    RatingSerializer,
     ReviewSerializer,
     TitleSerializer,
 )
@@ -28,9 +34,7 @@ class TitleDetail(RetrieveAPIView):
     queryset = (
         Title.objects.all()
         .prefetch_related("genres", "type")
-        .annotate(
-            rating=Avg(F("ratings__rating")), rating_count=Count(F("ratings"))
-        )
+        .annotate(rating_count=Count(F("ratings")))
     )
     serializer_class = TitleSerializer
 
@@ -71,9 +75,7 @@ class TitleSearch(ListAPIView):
         min_year = query_params.get("min_year")
         max_year = query_params.get("max_year")
 
-        queryset = Title.objects.all().annotate(
-            rating=Avg(F("ratings__rating"))
-        )
+        queryset = Title.objects.all()
 
         if sort:
             queryset = queryset.order_by(sort, "start_year")
@@ -234,10 +236,7 @@ class ListWatchlist(ListAPIView):
     serializer_class = BasicTitleSerializer
 
     def get_queryset(self):
-        queryset = self.request.user.watchlist.all().annotate(
-            rating=Avg(F("ratings__rating"))
-        )
-
+        queryset = self.request.user.watchlist.all()
         return queryset
 
 
@@ -250,10 +249,7 @@ class ListFavorites(ListAPIView):
     serializer_class = BasicTitleSerializer
 
     def get_queryset(self):
-        queryset = self.request.user.favorites.all().annotate(
-            rating=Avg(F("ratings__rating"))
-        )
-
+        queryset = self.request.user.favorites.all()
         return queryset
 
 
@@ -277,7 +273,7 @@ class UserRating(APIView):
                 MISSING_REQUIRED_FIELDS, status.HTTP_400_BAD_REQUEST
             )
 
-        rating = request.user.ratings.filter(title=title_id)
+        rating = request.user.ratings.filter(title=title_id, outdated=False)
         if rating.exists():
             return Response({"rating": rating.first().rating})
         else:
@@ -286,35 +282,33 @@ class UserRating(APIView):
     def post(self, request):
         """
         Method for creating or updating a Rating instance. If the user has
-        already rated a title, then the same Rating instance will be updated
-        instead of creating a new instance.
+        already rated a title, the previous instances will be marked as
+        outdated.
         """
 
-        try:
-            title_id = request.data.get("id")
-            rating = request.data.get("rating")
-        except KeyError:
-            return Response(status.HTTP_400_BAD_REQUEST)
+        title_id = request.data.get("id")
+        rating = request.data.get("rating")
 
-        rating_instance = Rating.objects.filter(
-            title=title_id, user=request.user.id
-        )
-
-        if rating_instance.exists():
-            rating_instance = rating_instance.first()
-            rating_instance.rating = rating
-        else:
-            rating_instance = Rating(
-                title_id=title_id, user=request.user, rating=rating
-            )
-
-        try:
-            rating_instance.full_clean()
-        except ValidationError:
+        if title_id is None or rating is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        rating_instance.save()
-        return response_http("Rating has been saved", status.HTTP_200_OK)
+        data = {"title": title_id, "user": request.user.id, "rating": rating}
+
+        serializer = RatingSerializer(data=data)
+        if serializer.is_valid():
+
+            previous_ratings = Rating.objects.filter(
+                title=title_id, user=request.user.id, outdated=False
+            )
+
+            if previous_ratings.exists():
+                previous_ratings.update(outdated=True)
+
+            serializer.save()
+            return response_http("Rating has been saved", status.HTTP_200_OK)
+
+        message = get_first_serializer_error(serializer.errors)
+        return response_http(message, status.HTTP_200_OK)
 
 
 class UserReview(APIView):
@@ -337,7 +331,7 @@ class UserReview(APIView):
                 MISSING_REQUIRED_FIELDS, status.HTTP_400_BAD_REQUEST
             )
 
-        review = request.user.reviews.filter(title=title_id)
+        review = request.user.reviews.filter(title=title_id, outdated=False)
         if review.exists():
             return Response({"review": review.first().review})
         else:
@@ -345,9 +339,9 @@ class UserReview(APIView):
 
     def post(self, request):
         """
-        Method for creating or updating a Review instance. If the user has
-        already reviewed a title, then the same Review instance will be updated
-        instead of creating a new instance.
+        Method for creating a Review instance. If the user has
+        already reviewed a title, the previous instances will be marked as
+        outdated.
         """
 
         title_id = request.data.get("id")
@@ -356,20 +350,24 @@ class UserReview(APIView):
         if title_id is None or review is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        review_instance = Review.objects.filter(
-            title=title_id, user=request.user.id
-        )
+        data = {"title": title_id, "user": request.user.id, "review": review}
 
-        if review_instance.exists():
-            review_instance = review_instance.first()
-            review_instance.review = review
-        else:
-            review_instance = Review(
-                title_id=title_id, user=request.user, review=review
+        serializer = CreateReviewSerializer(data=data)
+        if serializer.is_valid():
+            previous_reviews = Review.objects.filter(
+                title=title_id, user=request.user.id, outdated=False
             )
 
-        review_instance.save()
-        return response_http("Review has been saved", status.HTTP_200_OK)
+            if previous_reviews.exists():
+                previous_reviews.update(outdated=True)
+
+            serializer.save()
+            return response_http(
+                "Review has been submitted", status.HTTP_200_OK
+            )
+
+        message = get_first_serializer_error(serializer.errors)
+        return response_http(message, status.HTTP_200_OK)
 
 
 class TitleReviews(ListAPIView):
@@ -384,5 +382,25 @@ class TitleReviews(ListAPIView):
         queryset = Review.objects.filter(title=title_id).prefetch_related(
             "title", "user"
         )
+
+        return queryset
+
+
+class Timeline(ListAPIView):
+    """
+    View for retrieving the activity log for user timeline.
+    """
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = ActivitySerializer
+
+    def get_queryset(self):
+        following = self.request.user.follows
+        following_list = list(following.values_list("id", flat=True))
+        following_list.append(self.request.user.id)
+
+        queryset = ActivityLog.objects.filter(
+            user__id__in=following_list
+        ).order_by("-created_at")
 
         return queryset

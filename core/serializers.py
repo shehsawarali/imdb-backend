@@ -1,9 +1,9 @@
 from rest_framework import serializers
 
 from common.utils import SimpleNameAndIdSerializer, SimpleNameSerializer
-from users.serializers import UserSerializer
+from users.serializers import FollowSerializer, UserSerializer
 
-from .models import Crew, Person, Principal, Review, Title
+from .models import ActivityLog, Crew, Person, Principal, Rating, Review, Title
 
 
 class BasicTitleSerializer(serializers.ModelSerializer):
@@ -12,7 +12,6 @@ class BasicTitleSerializer(serializers.ModelSerializer):
     information.
     """
 
-    type = SimpleNameAndIdSerializer()
     rating = serializers.DecimalField(
         max_digits=3, decimal_places=1, required=False
     )
@@ -25,7 +24,6 @@ class BasicTitleSerializer(serializers.ModelSerializer):
             "start_year",
             "end_year",
             "image",
-            "type",
             "rating",
         ]
 
@@ -143,7 +141,7 @@ class PersonSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     """
-    Serializer for Review model, in TitleReviews view.
+    Serializer for retrieving instance of Review model.
     """
 
     title = SimpleNameAndIdSerializer()
@@ -152,3 +150,47 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ["title", "review", "user"]
+
+
+class CreateReviewSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating instances of Review model.
+    """
+
+    class Meta:
+        model = Review
+        fields = ["title", "user", "review"]
+
+
+class RatingSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating and retrieving instances of Rating model.
+    """
+
+    rating = serializers.IntegerField(max_value=10, min_value=1)
+
+    class Meta:
+        model = Rating
+        fields = ["title", "user", "rating"]
+
+
+class ActivitySerializer(serializers.ModelSerializer):
+    """
+    Serializer for retrieving instances of ActivityLog model.
+    """
+
+    rating = RatingSerializer(required=False)
+    review = ReviewSerializer(required=False)
+    title = BasicTitleSerializer()
+    user = FollowSerializer()
+
+    class Meta:
+        model = ActivityLog
+        fields = [
+            "user",
+            "title",
+            "action",
+            "rating",
+            "review",
+            "created_at",
+        ]

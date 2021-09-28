@@ -6,6 +6,7 @@ from .views import (
     ListWatchlist,
     PersonDetail,
     PersonSearch,
+    Timeline,
     TitleDetail,
     TitleReviews,
     TitleSearch,
@@ -26,4 +27,5 @@ urlpatterns = [
     path("rate/", UserRating.as_view(), name="rate-title"),
     path("review/", UserReview.as_view(), name="review-title"),
     path("reviews/<int:pk>/", TitleReviews.as_view(), name="title-reviews"),
+    path("timeline/", Timeline.as_view(), name="timeline"),
 ]

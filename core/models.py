@@ -4,6 +4,8 @@ from django.db import models
 
 from common.utils import BaseTimestampsModel, SimpleNameModel
 
+from .managers import TitleManager
+
 YEAR_LENGTH = 4
 CHAR_LENGTH = 255
 
@@ -44,6 +46,9 @@ class Title(BaseTimestampsModel):
     foreign_key.
     """
 
+    class Meta:
+        base_manager_name = "objects"
+
     id = models.PositiveBigIntegerField(primary_key=True)
     type = models.ForeignKey(TitleType, null=True, on_delete=models.SET_NULL)
     name = models.CharField(max_length=CHAR_LENGTH)
@@ -58,6 +63,8 @@ class Title(BaseTimestampsModel):
     )
     image = models.ImageField(upload_to="title", blank=True)
     description = models.TextField(blank=True)
+
+    objects = TitleManager()
 
     def __str__(self):
         return f"{self.name}, id={self.id}"
@@ -156,6 +163,7 @@ class Rating(BaseTimestampsModel):
     rating = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)]
     )
+    outdated = models.BooleanField(default=False)
 
 
 class Review(BaseTimestampsModel):
@@ -174,14 +182,7 @@ class Review(BaseTimestampsModel):
         Title, on_delete=models.CASCADE, related_name="reviews"
     )
     review = models.TextField()
-
-
-class Action(SimpleNameModel):
-    """
-    Specifies an action performed by a user
-    """
-
-    pass
+    outdated = models.BooleanField(default=False)
 
 
 class ActivityLog(BaseTimestampsModel):
@@ -196,7 +197,13 @@ class ActivityLog(BaseTimestampsModel):
         on_delete=models.CASCADE,
     )
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
-    action = models.ForeignKey(Action, on_delete=models.RESTRICT)
+    action = models.CharField(max_length=CHAR_LENGTH)
+    rating = models.ForeignKey(
+        Rating, on_delete=models.CASCADE, blank=True, null=True
+    )
+    review = models.ForeignKey(
+        Review, on_delete=models.CASCADE, blank=True, null=True
+    )
 
 
 class Crew(models.Model):

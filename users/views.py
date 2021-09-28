@@ -16,6 +16,8 @@ from common.utils import (
     get_first_serializer_error,
     response_http,
 )
+from core.models import ActivityLog
+from core.serializers import ActivitySerializer
 
 from .emails import (
     send_password_changed_email,
@@ -348,3 +350,18 @@ class AvatarUpload(APIView):
 
         message = get_first_serializer_error(serializer.errors)
         return response_http(message, status.HTTP_400_BAD_REQUEST)
+
+
+class UserActivity(ListAPIView):
+    """
+    View for retrieving a single user's activity.
+    """
+
+    serializer_class = ActivitySerializer
+
+    def get_queryset(self):
+        pk = self.kwargs["pk"]
+        queryset = ActivityLog.objects.filter(user_id=pk).order_by(
+            "-created_at"
+        )
+        return queryset
