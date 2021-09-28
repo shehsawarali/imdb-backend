@@ -5,6 +5,7 @@ from distutils.util import strtobool
 from django.db.utils import IntegrityError
 
 from core.models import (
+    Crew,
     Genre,
     Person,
     Principal,
@@ -43,6 +44,8 @@ def open_file_and_call_parser(file):
             parse_akas(reader)
         elif "title.principals" in file_name:
             parse_principal(reader)
+        elif "title.crew" in file_name:
+            parse_crew(reader)
         else:
             logger.info("No method defined for parsing file %s", file_name)
             raise ValueError
@@ -381,3 +384,69 @@ def parse_principal(tsv_rows):
                 instance["person"],
                 error,
             )
+
+
+def parse_crew(tsv_rows):
+    """
+    Parses and saves Crew according to `title.crew.tsv`
+
+    Args:
+        tsv_rows (): List of rows in the uploaded tsv file
+
+    Returns:
+        None
+    """
+
+    model_fields = ["title", "directors", "writers"]
+
+    directors = writers = None
+
+    for row in tsv_rows:
+        instance = read_field_data(model_fields, row)
+
+        instance["title"] = normalize_title(instance["title"])
+        if Crew.objects.filter(title=instance["title"]).exists():
+            logger.info("Duplicate Crew")
+            continue
+
+        title_object = Title.objects.filter(id=instance["title"])
+        if title_object.exists():
+            instance["title"] = title_object.first()
+        else:
+            logger.info("Crew Title does not exist")
+            continue
+
+        if instance["directors"]:
+            directors = []
+            temp_row = instance["directors"].split(",")
+
+            for director in temp_row:
+                normalized_id = normalize_person(director)
+                if Person.objects.filter(id=normalized_id).exists():
+                    directors.append(normalized_id)
+
+        if instance["writers"]:
+            writers = []
+            temp_row = instance["writers"].split(",")
+
+            for writer in temp_row:
+                normalized_id = normalize_person(writer)
+                if Person.objects.filter(id=normalized_id).exists():
+                    writers.append(normalized_id)
+
+        del instance["directors"]
+        del instance["writers"]
+
+        try:
+            new_crew = Crew.objects.create(**instance)
+
+            if writers and len(writers):
+                new_crew.writers.add(*writers)
+
+            if directors and len(directors):
+                new_crew.directors.add(*directors)
+
+            logger.info("Created Crew %s", new_crew.id)
+        except (ValueError, TypeError, IntegrityError) as error:
+            logger.info("Error while creating Crew for %s", instance["title"])
+            logger.error(error)

@@ -1,4 +1,5 @@
 from django.db import models
+from rest_framework import serializers
 
 CHAR_LENGTH = 255
 
@@ -28,3 +29,20 @@ class SimpleNameModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class SimpleNameSerializer(serializers.Serializer):
+    """
+    Reusable serializer for serializing only the `name` attribute.
+    """
+
+    name = serializers.CharField(required=True)
+
+
+class SimpleNameAndIdSerializer(serializers.Serializer):
+    """
+    Reusable serializer for serializing only the `id` and `name` attributes
+    """
+
+    id = serializers.IntegerField(required=True)
+    name = serializers.CharField(required=True)
