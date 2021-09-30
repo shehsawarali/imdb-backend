@@ -6,10 +6,12 @@ from .views import (
     ListWatchlist,
     PersonDetail,
     PersonSearch,
+    Recommendations,
     Timeline,
     TitleDetail,
     TitleReviews,
     TitleSearch,
+    TopRated,
     UserRating,
     UserReview,
     Watchlist,
@@ -28,4 +30,8 @@ urlpatterns = [
     path("review/", UserReview.as_view(), name="review-title"),
     path("reviews/<int:pk>/", TitleReviews.as_view(), name="title-reviews"),
     path("timeline/", Timeline.as_view(), name="timeline"),
+    path(
+        "recommendations/", Recommendations.as_view(), name="recommendations"
+    ),
+    path("top_rated/", TopRated.as_view(), name="top_rated"),
 ]

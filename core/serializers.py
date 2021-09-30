@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from common.utils import SimpleNameAndIdSerializer, SimpleNameSerializer
-from users.serializers import FollowSerializer, UserSerializer
+from users.serializers import FollowSerializer
 
 from .models import ActivityLog, Crew, Person, Principal, Rating, Review, Title
 
@@ -145,7 +145,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     """
 
     title = SimpleNameAndIdSerializer()
-    user = UserSerializer()
+    user = FollowSerializer()
 
     class Meta:
         model = Review

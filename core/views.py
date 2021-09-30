@@ -1,4 +1,4 @@
-from django.db.models import Count, F
+from django.db.models import Count, F, Q
 from rest_framework import status
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView, RetrieveAPIView
@@ -408,8 +408,10 @@ class TitleReviews(ListAPIView):
 
     def get_queryset(self):
         title_id = self.kwargs["pk"]
-        queryset = Review.objects.filter(title=title_id).prefetch_related(
-            "title", "user"
+        queryset = (
+            Review.objects.filter(title=title_id, outdated=False)
+            .prefetch_related("title", "user")
+            .order_by("-id")
         )
 
         return queryset
@@ -435,3 +437,40 @@ class Timeline(ListAPIView):
         )
 
         return queryset
+
+
+class Recommendations(APIView):
+    """
+    View for retrieving upto five Title recommendations for a user.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        recommendations = Title.objects.filter(
+            Q(watchlist_set=user)
+            | Q(watchlist_set__id__in=user.follows.all())
+            | Q(favorites_set__id__in=user.follows.all())
+        ).order_by("?")[:5]
+
+        serializer = BasicTitleSerializer(
+            recommendations, many=True, context={"request": request}
+        )
+        return Response(serializer.data)
+
+
+class TopRated(APIView):
+    """
+    View for retrieving upto 10 top-rated Titles
+    """
+
+    def get(self, request):
+        recommendations = Title.objects.exclude(rating=None).order_by(
+            "-rating"
+        )[:10]
+
+        serializer = BasicTitleSerializer(
+            recommendations, many=True, context={"request": request}
+        )
+        return Response(serializer.data)

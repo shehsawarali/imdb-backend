@@ -22,8 +22,29 @@ from .utils import (
 
 class UserSerializer(serializers.ModelSerializer):
     """
-    Serializer, for User model, to filter which attributes will be returned
-    to client
+    Serializer, for User model, which only includes the user's public
+    information
+    """
+
+    country = CountryField(country_dict=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "country",
+            "age",
+            "date_joined",
+            "image",
+        ]
+
+
+class PrivateUserSerializer(serializers.ModelSerializer):
+    """
+    Serializer, for User model, which includes the user's private information
     """
 
     country = CountryField(country_dict=True)
@@ -41,6 +62,9 @@ class UserSerializer(serializers.ModelSerializer):
             "follows",
             "followers",
             "image",
+            "timezone",
+            "email_list_preference",
+            "login_alert_preference",
         ]
 
 

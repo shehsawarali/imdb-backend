@@ -87,17 +87,19 @@ def send_password_reset_link(user):
 
 def send_login_email(user):
     """
-    Sends an email to the user, alerting them of their last login
+    Sends an email to the user, alerting them of their last login. The email is
+    only sent if the user's login_alert_preference is set to True.
     """
 
-    return send_email(
-        [user],
-        {
-            "template": "recent-login-email.html",
-            "subject": "Recent Login",
-            "context": {"timestamp": user.last_login},
-        },
-    )
+    if user.login_alert_preference:
+        return send_email(
+            [user],
+            {
+                "template": "recent-login-email.html",
+                "subject": "Recent Login",
+                "context": {"timestamp": user.last_login},
+            },
+        )
 
 
 def send_registration_email(user):
