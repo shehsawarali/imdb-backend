@@ -74,6 +74,8 @@ class RegistrationSerializer(serializers.ModelSerializer, CountryFieldMixin):
     client, and create new User instance upon successful validation.
     """
 
+    password = serializers.CharField(min_length=4)
+
     class Meta:
         model = User
         fields = (

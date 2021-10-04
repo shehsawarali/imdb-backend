@@ -228,7 +228,9 @@ class UserViewSet(viewsets.ViewSet):
     ViewSet for retrieving and updating public user information.
     """
 
-    queryset = User.objects.all().prefetch_related("follows", "followers")
+    queryset = User.objects.filter(is_active=True).prefetch_related(
+        "follows", "followers"
+    )
 
     def retrieve(self, request, pk):
         user = get_object_or_404(self.queryset, id=pk)
@@ -263,7 +265,8 @@ class Follow(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
-        user = get_object_or_404(User, id=pk)
+        queryset = User.objects.filter(is_active=True)
+        user = get_object_or_404(queryset, id=pk)
 
         if not user.id == request.user.id:
             request.user.follows.add(user.id)
