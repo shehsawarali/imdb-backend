@@ -62,6 +62,9 @@ class User(AbstractUser):
         Title, blank=True, related_name="favorites_set"
     )
     image = models.ImageField(upload_to="user", blank=True)
+    timezone = models.CharField(max_length=CHAR_LENGTH, blank=True)
+    login_alert_preference = models.BooleanField(default=True)
+    email_list_preference = models.BooleanField(default=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name", "country", "age"]

@@ -30,6 +30,7 @@ from .serializers import (
     FollowSerializer,
     LoginSerializer,
     PasswordResetSerializer,
+    PrivateUserSerializer,
     RegistrationSerializer,
     ResetLinkSerializer,
     UserSerializer,
@@ -106,7 +107,7 @@ class VerifySession(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        serializer = UserSerializer(request.user)
+        serializer = PrivateUserSerializer(request.user)
         return Response({"user": serializer.data})
 
 
@@ -227,7 +228,9 @@ class UserViewSet(viewsets.ViewSet):
     ViewSet for retrieving and updating public user information.
     """
 
-    queryset = User.objects.all().prefetch_related("follows", "followers")
+    queryset = User.objects.filter(is_active=True).prefetch_related(
+        "follows", "followers"
+    )
 
     def retrieve(self, request, pk):
         user = get_object_or_404(self.queryset, id=pk)
@@ -240,10 +243,14 @@ class UserViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
         user = get_object_or_404(self.queryset, id=pk)
-        serializer = UserSerializer(user, data=request.data, partial=True)
+        serializer = PrivateUserSerializer(
+            user, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
-            return Response({"data": serializer.data})
+            return response_http(
+                "Your profile has been updated", status=status.HTTP_200_OK
+            )
 
         message = get_first_serializer_error(serializer.errors)
         return response_http(message, status.HTTP_400_BAD_REQUEST)
@@ -258,7 +265,8 @@ class Follow(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
-        user = get_object_or_404(User, id=pk)
+        queryset = User.objects.filter(is_active=True)
+        user = get_object_or_404(queryset, id=pk)
 
         if not user.id == request.user.id:
             request.user.follows.add(user.id)

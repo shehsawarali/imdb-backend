@@ -10,7 +10,7 @@ body {
 
 .email-body {
     padding: 4rem 2rem;
-    background-color: #2f2e2e;
+    background-color: #1f1f1f;
     color: white;
 }
 
@@ -29,4 +29,17 @@ body {
 
 a {
     color: lightskyblue
+}
+
+.recommendation-title{
+    display: flex;
+    justify-content: space-between;
+    background-color: #2f2d2d;
+    border: 1px solid #121212;
+    box-shadow: 1px 1px 3px #121212;
+    border-radius: 8px;
+    padding: 1rem;
+    width: 500px;
+    margin: auto;
+    margin-bottom: 10px;
 }
