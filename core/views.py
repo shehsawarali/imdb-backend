@@ -425,6 +425,11 @@ class Timeline(ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ActivitySerializer
 
+    def get_serializer_context(self):
+        context = super(Timeline, self).get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
     def get_queryset(self):
         following = self.request.user.follows
         following_list = list(following.values_list("id", flat=True))
