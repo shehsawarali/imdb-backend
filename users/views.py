@@ -1,14 +1,21 @@
-import logging
-
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.debug import sensitive_post_parameters
 from rest_framework import status, viewsets
 from rest_framework.generics import ListAPIView
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from common.utils import (
+    MISSING_REQUIRED_FIELDS,
+    get_first_serializer_error,
+    response_http,
+)
+from core.models import ActivityLog
+from core.serializers import ActivitySerializer
 
 from .emails import (
     send_password_changed_email,
@@ -21,18 +28,12 @@ from .serializers import (
     FollowSerializer,
     LoginSerializer,
     PasswordResetSerializer,
+    PrivateUserSerializer,
     RegistrationSerializer,
     ResetLinkSerializer,
     UserSerializer,
     VerificationSerializer,
 )
-from .utils import (
-    MISSING_REQUIRED_FIELDS,
-    get_first_serializer_error,
-    response_http,
-)
-
-logger = logging.getLogger(__name__)
 
 
 class Login(APIView):
@@ -102,7 +103,7 @@ class VerifySession(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        serializer = UserSerializer(request.user)
+        serializer = PrivateUserSerializer(request.user)
         return Response({"user": serializer.data})
 
 
@@ -152,7 +153,7 @@ class ForgotPassword(APIView):
             )
 
         return response_http(
-            "Please reset your password using the link sent"
+            "Please reset your password using the link sent "
             "to your email address",
             status.HTTP_200_OK,
         )
@@ -223,11 +224,13 @@ class UserViewSet(viewsets.ViewSet):
     ViewSet for retrieving and updating public user information.
     """
 
-    queryset = User.objects.all().prefetch_related("follows", "followers")
+    queryset = User.objects.filter(is_active=True).prefetch_related(
+        "follows", "followers"
+    )
 
     def retrieve(self, request, pk):
         user = get_object_or_404(self.queryset, id=pk)
-        serializer = UserSerializer(user)
+        serializer = UserSerializer(user, context={"request": request})
 
         return Response({"profile": serializer.data})
 
@@ -236,10 +239,14 @@ class UserViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
         user = get_object_or_404(self.queryset, id=pk)
-        serializer = UserSerializer(user, data=request.data, partial=True)
+        serializer = PrivateUserSerializer(
+            user, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
-            return Response({"data": serializer.data})
+            return response_http(
+                "Your profile has been updated", status=status.HTTP_200_OK
+            )
 
         message = get_first_serializer_error(serializer.errors)
         return response_http(message, status.HTTP_400_BAD_REQUEST)
@@ -254,7 +261,8 @@ class Follow(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
-        user = get_object_or_404(User, id=pk)
+        queryset = User.objects.filter(is_active=True)
+        user = get_object_or_404(queryset, id=pk)
 
         if not user.id == request.user.id:
             request.user.follows.add(user.id)
@@ -325,3 +333,39 @@ class UserFollowing(ListAPIView):
         pk = self.kwargs["pk"]
         user = User.objects.filter(id=pk).prefetch_related("follows").first()
         return user.follows.all()
+
+
+class AvatarUpload(APIView):
+    """
+    View for uploading User Avatar. Requires a single image file in a
+    `multipart/form-data` http request.
+    """
+
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        serializer = UserSerializer(
+            request.user, data=request.data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return response_http("Uploaded", status.HTTP_200_OK)
+
+        message = get_first_serializer_error(serializer.errors)
+        return response_http(message, status.HTTP_400_BAD_REQUEST)
+
+
+class UserActivity(ListAPIView):
+    """
+    View for retrieving a single user's activity.
+    """
+
+    serializer_class = ActivitySerializer
+
+    def get_queryset(self):
+        pk = self.kwargs["pk"]
+        queryset = ActivityLog.objects.filter(user_id=pk).order_by(
+            "-created_at"
+        )
+        return queryset

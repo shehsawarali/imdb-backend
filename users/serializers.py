@@ -22,8 +22,29 @@ from .utils import (
 
 class UserSerializer(serializers.ModelSerializer):
     """
-    Serializer, for User model, to filter which attributes will be returned
-    to client
+    Serializer, for User model, which only includes the user's public
+    information
+    """
+
+    country = CountryField(country_dict=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "country",
+            "age",
+            "date_joined",
+            "image",
+        ]
+
+
+class PrivateUserSerializer(serializers.ModelSerializer):
+    """
+    Serializer, for User model, which includes the user's private information
     """
 
     country = CountryField(country_dict=True)
@@ -40,6 +61,10 @@ class UserSerializer(serializers.ModelSerializer):
             "date_joined",
             "follows",
             "followers",
+            "image",
+            "timezone",
+            "email_list_preference",
+            "login_alert_preference",
         ]
 
 
@@ -48,6 +73,8 @@ class RegistrationSerializer(serializers.ModelSerializer, CountryFieldMixin):
     Serializer, for Registration view, to validate form data received from
     client, and create new User instance upon successful validation.
     """
+
+    password = serializers.CharField(min_length=4)
 
     class Meta:
         model = User
@@ -223,12 +250,7 @@ class FollowSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = [
-            "id",
-            "email",
-            "first_name",
-            "last_name",
-        ]
+        fields = ["id", "email", "first_name", "last_name", "image"]
 
 
 class ChangePasswordSerializer(serializers.ModelSerializer):

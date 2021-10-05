@@ -7,7 +7,6 @@ from .model_admins import (
     ReviewAdmin,
 )
 from .models import (
-    Action,
     ActivityLog,
     Genre,
     Person,
@@ -20,9 +19,7 @@ from .models import (
     TitleType,
 )
 
-admin.site.register(
-    [Title, TitleName, TitleType, Person, Profession, Genre, Action]
-)
+admin.site.register([Title, TitleName, TitleType, Person, Profession, Genre])
 
 admin.site.register(Rating, RatingAdmin)
 admin.site.register(Review, ReviewAdmin)

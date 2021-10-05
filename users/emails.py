@@ -87,8 +87,12 @@ def send_password_reset_link(user):
 
 def send_login_email(user):
     """
-    Sends an email to the user, alerting them of their last login
+    Sends an email to the user, alerting them of their last login. The email is
+    only sent if the user's login_alert_preference is set to True.
     """
+
+    if not user.login_alert_preference:
+        return
 
     return send_email(
         [user],
@@ -114,7 +118,7 @@ def send_registration_email(user):
         [user],
         {
             "template": "user-registration-email.html",
-            "subject": "Welcome to IMDb!",
+            "subject": "Welcome to FilmFilia!",
             "context": {"link": link},
         },
     )
@@ -130,5 +134,23 @@ def send_password_changed_email(user):
         {
             "template": "password-changed-email.html",
             "subject": "Password Changed",
+        },
+    )
+
+
+def send_recommendation_email(user, titles):
+    """
+    Sends an email to the user with title recommendations
+    """
+
+    return send_email(
+        [user],
+        {
+            "template": "recommendations-email.html",
+            "subject": "Recommended For You",
+            "context": {
+                "titles": titles,
+                "FRONTEND_URL": settings.FRONTEND_URL,
+            },
         },
     )

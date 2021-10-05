@@ -2,16 +2,8 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_text
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import serializers
-from rest_framework.response import Response
 
 from .models import User
-
-REQUIRED_FIELDS_ERRORS = [
-    "This field may not be blank.",
-    "This field is required.",
-    '"" is not a valid choice.',  # for CountryField in User model
-]
-MISSING_REQUIRED_FIELDS = "Missing required fields."
 
 
 class BaseUserTokenSerializer(serializers.Serializer):
@@ -60,30 +52,3 @@ class VerificationTokenGenerator(PasswordResetTokenGenerator):
 
 verification_token = VerificationTokenGenerator()
 password_reset_token = PasswordResetTokenGenerator()
-
-
-def get_first_serializer_error(errors):
-    """
-    Receives serializer errors and returns the first error.
-    """
-
-    error_list = [errors[error][0] for error in errors]
-    message = error_list[0]
-    if message in REQUIRED_FIELDS_ERRORS:
-        message = MISSING_REQUIRED_FIELDS
-
-    return message
-
-
-def response_http(message, status):
-    """
-    Takes a message and an HTTP status code, and returns an HTTP response
-    which can be sent to the client.
-    """
-
-    return Response(
-        {
-            "message": message,
-        },
-        status=status,
-    )
