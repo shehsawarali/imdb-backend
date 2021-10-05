@@ -2,12 +2,14 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from common.utils import BaseTimestampsModel, SimpleNameModel
+from common.utils import (
+    MAX_STRING_LENGTH,
+    YEAR_LENGTH,
+    BaseTimestampsModel,
+    SimpleNameModel,
+)
 
 from .managers import TitleManager
-
-YEAR_LENGTH = 4
-CHAR_LENGTH = 255
 
 
 class Genre(SimpleNameModel):
@@ -51,7 +53,7 @@ class Title(BaseTimestampsModel):
 
     id = models.PositiveBigIntegerField(primary_key=True)
     type = models.ForeignKey(TitleType, null=True, on_delete=models.SET_NULL)
-    name = models.CharField(max_length=CHAR_LENGTH)
+    name = models.CharField(max_length=MAX_STRING_LENGTH)
     is_adult = models.BooleanField(default=False)
     start_year = models.CharField(
         max_length=YEAR_LENGTH, null=True, blank=True
@@ -78,9 +80,13 @@ class TitleName(BaseTimestampsModel):
     """
 
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
-    name = models.CharField(max_length=CHAR_LENGTH)
-    region = models.CharField(max_length=CHAR_LENGTH, null=True, blank=True)
-    language = models.CharField(max_length=CHAR_LENGTH, null=True, blank=True)
+    name = models.CharField(max_length=MAX_STRING_LENGTH)
+    region = models.CharField(
+        max_length=MAX_STRING_LENGTH, null=True, blank=True
+    )
+    language = models.CharField(
+        max_length=MAX_STRING_LENGTH, null=True, blank=True
+    )
     is_original_title = models.BooleanField(default=True)
     types = models.ManyToManyField(TitleType, blank=True, related_name="types")
     attributes = models.ManyToManyField(
@@ -96,7 +102,7 @@ class Person(BaseTimestampsModel):
     """
 
     id = models.PositiveBigIntegerField(primary_key=True)
-    name = models.CharField(max_length=CHAR_LENGTH)
+    name = models.CharField(max_length=MAX_STRING_LENGTH)
     birth_year = models.CharField(
         max_length=YEAR_LENGTH, null=True, blank=True
     )
@@ -132,8 +138,8 @@ class Principal(BaseTimestampsModel):
     person = models.ForeignKey(
         Person, on_delete=models.CASCADE, related_name="filmography"
     )
-    category = models.CharField(max_length=CHAR_LENGTH)
-    job = models.CharField(max_length=CHAR_LENGTH, null=True, blank=True)
+    category = models.CharField(max_length=MAX_STRING_LENGTH)
+    job = models.CharField(max_length=MAX_STRING_LENGTH, null=True, blank=True)
     characters = models.TextField(null=True, blank=True)
 
     class Meta:
@@ -197,7 +203,7 @@ class ActivityLog(BaseTimestampsModel):
         on_delete=models.CASCADE,
     )
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
-    action = models.CharField(max_length=CHAR_LENGTH)
+    action = models.CharField(max_length=MAX_STRING_LENGTH)
     rating = models.ForeignKey(
         Rating, on_delete=models.CASCADE, blank=True, null=True
     )

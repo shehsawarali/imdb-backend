@@ -3,6 +3,7 @@ import json
 import logging
 
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 from parameterized import parameterized
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -43,13 +44,15 @@ class UserRegistrationTest(APITestCase):
         "country": "PK",
     }
 
+    url = reverse("register")
+
     @parameterized.expand(
         ["first_name", "last_name", "email", "password", "age", "country"]
     )
     def test_missing_parameters(self, field):
         missing_parameter_form = copy.deepcopy(client_user_data)
         missing_parameter_form.pop(field)
-        response = self.client.post("/user/register/", missing_parameter_form)
+        response = self.client.post(self.url, missing_parameter_form)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @parameterized.expand(
@@ -59,12 +62,12 @@ class UserRegistrationTest(APITestCase):
         ]
     )
     def test_invalid_data(self, data, expected):
-        response = self.client.post("/user/register/", data)
+        response = self.client.post(self.url, data)
         assert response.status_code == expected
         assert User.objects.count() == 0
 
     def test_valid_data(self):
-        response = self.client.post("/user/register/", client_user_data)
+        response = self.client.post(self.url, client_user_data)
         assert response.status_code == status.HTTP_201_CREATED
         assert User.objects.count() == 1
 
@@ -73,6 +76,8 @@ class UserLogin(APITestCase):
     """
     Tests user login for active users with valid and invalid credentials.
     """
+
+    url = reverse("login")
 
     def setUp(self):
         user = User.objects.create_user(**client_user_data)
@@ -98,7 +103,7 @@ class UserLogin(APITestCase):
         ]
     )
     def test_invalid_credentials(self, data, expected):
-        response = self.client.post("/user/login/", data)
+        response = self.client.post(self.url, data)
         assert response.status_code == expected
 
     def test_valid_credentials(self):
@@ -107,7 +112,7 @@ class UserLogin(APITestCase):
             "password": client_user_data.get("password"),
         }
 
-        response = self.client.post("/user/login/", data)
+        response = self.client.post(self.url, data)
         assert response.status_code == status.HTTP_200_OK
 
 
@@ -115,6 +120,8 @@ class UnverifiedUserLogin(APITestCase):
     """
     Tests user login for inactive users.
     """
+
+    url = reverse("login")
 
     def setUp(self):
         User.objects.create_user(**client_user_data)
@@ -125,7 +132,7 @@ class UnverifiedUserLogin(APITestCase):
             "password": client_user_data.get("password"),
         }
 
-        response = self.client.post("/user/login/", data)
+        response = self.client.post(self.url, data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
@@ -153,20 +160,21 @@ class Follow(APITestCase):
             HTTP_AUTHORIZATION="Bearer " + str(refresh.access_token)
         )
 
+        self.user2 = User.objects.create_user(**self.user2_data)
+        self.url = reverse("follow", args=[self.user2.id])
+
     def test_follow_unverified_user(self):
-        user2 = User.objects.create_user(**self.user2_data)
-        response = self.client.post(f"/user/follow/{user2.id}/")
+        response = self.client.post(self.url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_verified_profile(self):
-        user2 = User.objects.create_user(**self.user2_data)
-        user2.is_active = True
-        user2.save()
+        self.user2.is_active = True
+        self.user2.save()
 
-        response = self.client.post(f"/user/follow/{user2.id}/")
+        response = self.client.post(self.url)
         assert response.status_code == status.HTTP_200_OK
-        user1_email = client_user_data.get("email")
-        assert user2.followers.filter(email=user1_email).exists()
+        client_email = client_user_data.get("email")
+        assert self.user2.followers.filter(email=client_email).exists()
 
 
 class Profile(APITestCase):
@@ -174,17 +182,19 @@ class Profile(APITestCase):
     Tests retrieving active and inactive profiles.
     """
 
+    def setUp(self):
+        self.user = User.objects.create_user(**client_user_data)
+        self.url = reverse("user-detail", args=[self.user.id])
+
     def test_unverified_profile(self):
-        user = User.objects.create_user(**client_user_data)
-        response = self.client.get(f"/user/{user.id}/")
+        response = self.client.get(self.url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_verified_profile(self):
-        user = User.objects.create_user(**client_user_data)
-        user.is_active = True
-        user.save()
+        self.user.is_active = True
+        self.user.save()
 
-        response = self.client.get(f"/user/{user.id}/")
+        response = self.client.get(self.url)
         profile = json.loads(response.content)["profile"]
 
         assert response.status_code == status.HTTP_200_OK

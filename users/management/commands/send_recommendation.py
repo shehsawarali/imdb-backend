@@ -7,7 +7,6 @@ from users.models import User
 
 
 class Command(BaseCommand):
-
     help = "Send title recommendations to users"
 
     def handle(self, *args, **options):

@@ -91,15 +91,17 @@ def send_login_email(user):
     only sent if the user's login_alert_preference is set to True.
     """
 
-    if user.login_alert_preference:
-        return send_email(
-            [user],
-            {
-                "template": "recent-login-email.html",
-                "subject": "Recent Login",
-                "context": {"timestamp": user.last_login},
-            },
-        )
+    if not user.login_alert_preference:
+        return
+
+    return send_email(
+        [user],
+        {
+            "template": "recent-login-email.html",
+            "subject": "Recent Login",
+            "context": {"timestamp": user.last_login},
+        },
+    )
 
 
 def send_registration_email(user):

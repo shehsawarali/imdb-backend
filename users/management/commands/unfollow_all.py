@@ -4,7 +4,6 @@ from users.models import User
 
 
 class Command(BaseCommand):
-
     help = "Unfollow all other users for a user"
 
     def add_arguments(self, parser):

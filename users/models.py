@@ -3,9 +3,8 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django_countries.fields import CountryField
 
+from common.utils import MAX_STRING_LENGTH
 from core.models import Title
-
-CHAR_LENGTH = 255
 
 
 class UserManager(BaseUserManager):
@@ -46,8 +45,8 @@ class User(AbstractUser):
     """
 
     username = None
-    first_name = models.CharField(max_length=CHAR_LENGTH)
-    last_name = models.CharField(max_length=CHAR_LENGTH)
+    first_name = models.CharField(max_length=MAX_STRING_LENGTH)
+    last_name = models.CharField(max_length=MAX_STRING_LENGTH)
     email = models.EmailField(unique=True)
     country = CountryField()
     age = models.PositiveSmallIntegerField(validators=[MinValueValidator(18)])
@@ -62,7 +61,7 @@ class User(AbstractUser):
         Title, blank=True, related_name="favorites_set"
     )
     image = models.ImageField(upload_to="user", blank=True)
-    timezone = models.CharField(max_length=CHAR_LENGTH, blank=True)
+    timezone = models.CharField(max_length=MAX_STRING_LENGTH, blank=True)
     login_alert_preference = models.BooleanField(default=True)
     email_list_preference = models.BooleanField(default=True)
 

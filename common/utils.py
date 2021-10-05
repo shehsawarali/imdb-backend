@@ -2,7 +2,9 @@ from django.db import models
 from rest_framework import serializers
 from rest_framework.response import Response
 
-CHAR_LENGTH = 255
+MAX_STRING_LENGTH = 255
+YEAR_LENGTH = 4
+
 REQUIRED_FIELDS_ERRORS = [
     "This field may not be blank.",
     "This field is required.",
@@ -29,7 +31,7 @@ class SimpleNameModel(models.Model):
     attribute `name`
     """
 
-    name = models.CharField(max_length=CHAR_LENGTH, unique=True)
+    name = models.CharField(max_length=MAX_STRING_LENGTH, unique=True)
 
     def __str__(self):
         return self.name
@@ -62,6 +64,7 @@ def get_first_serializer_error(errors):
 
     error_list = [errors[error][0] for error in errors]
     message = error_list[0]
+
     if message in REQUIRED_FIELDS_ERRORS:
         message = MISSING_REQUIRED_FIELDS
 
