@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.debug import sensitive_post_parameters
 from rest_framework import status, viewsets
+from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListAPIView
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -369,3 +370,20 @@ class UserActivity(ListAPIView):
             "-created_at"
         )
         return queryset
+
+
+class UserSearch(ListAPIView):
+    """
+    View for retrieving a paginated list of filtered User objects. The
+    search query must be passed in the query params with the `search` key.
+    If a query is not passed, the view will return a paginated list of all
+    User instances.
+    """
+
+    queryset = (
+        User.objects.all().filter(is_active=True).order_by("first_name", "id")
+    )
+
+    serializer_class = FollowSerializer
+    filter_backends = [SearchFilter]
+    search_fields = ["first_name", "last_name", "email"]

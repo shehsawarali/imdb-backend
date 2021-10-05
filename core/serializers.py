@@ -75,8 +75,8 @@ class CrewSerializer(serializers.ModelSerializer):
     not include the redundant `Title` object in the serialized data.
     """
 
-    writers = SimpleNameAndIdSerializer(many=True)
-    directors = SimpleNameAndIdSerializer(many=True)
+    writers = BasicPersonSerializer(many=True)
+    directors = BasicPersonSerializer(many=True)
 
     class Meta:
         model = Crew
