@@ -69,7 +69,7 @@ class Title(BaseTimestampsModel):
     objects = TitleManager()
 
     def __str__(self):
-        return f"{self.name}, id={self.id}"
+        return self.name
 
 
 class TitleName(BaseTimestampsModel):
@@ -122,7 +122,7 @@ class Person(BaseTimestampsModel):
     description = models.TextField(blank=True)
 
     def __str__(self):
-        return f"{self.name}, id={self.id}"
+        return self.name
 
 
 class Principal(BaseTimestampsModel):

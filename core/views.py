@@ -33,7 +33,7 @@ class TitleDetail(RetrieveAPIView):
 
     queryset = (
         Title.objects.all()
-        .prefetch_related("genres", "type")
+        .prefetch_related("genres", "type", "crew", "principals")
         .annotate(rating_count=Count(F("ratings")))
     )
     serializer_class = TitleSerializer
