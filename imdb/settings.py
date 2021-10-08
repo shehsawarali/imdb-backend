@@ -175,9 +175,9 @@ FRONTEND_URL = "https://filmfilia.herokuapp.com/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUDINARY_NAME', ''),
-    'API_KEY': os.environ.get('CLOUDINARY_KEY', ''),
-    'API_SECRET': os.environ.get('CLOUDINARY_SECRET', ''),
+    'CLOUD_NAME': 'ho2uqtppt',
+    'API_KEY': '675683513668841',
+    'API_SECRET': 'J83fkNwxz9IRFiXzZdkoSSofnBs',
 }
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
