@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import os.path
+import cloudinary_storage
 import django_heroku
 from datetime import timedelta
 from pathlib import Path
@@ -40,8 +41,8 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "django.contrib.staticfiles",
     "cloudinary_storage",
+    "django.contrib.staticfiles",
     'cloudinary',
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
