@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import os.path
+import django_heroku
 from datetime import timedelta
 from pathlib import Path
 
@@ -29,8 +30,7 @@ SECRET_KEY = (
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ["filmfilia-server.herokuapp.com", "localhost"]
 
 # Application definition
 
@@ -62,7 +62,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-CORS_ORIGIN_WHITELIST = ("http://localhost:3000",)
+CORS_ORIGIN_WHITELIST = ("http://localhost:3000", "https://filmfilia.herokuapp.com")
 
 ROOT_URLCONF = "imdb.urls"
 
@@ -90,16 +90,14 @@ WSGI_APPLICATION = "imdb.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "imdb",
-        "USER": "root",
-        "PASSWORD": "",
-        "HOST": "127.0.0.1",
-        "PORT": "3306",
-        "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "d7a222kd2409ob",
+        "USER": "tofrlqxvwzssqu",
+        "PASSWORD": "ca01a8776e431c3cac00179ae140b2f8401c3f5c42a7730b8e241ea5779a1cff",
+        "HOST": "ec2-54-172-169-87.compute-1.amazonaws.com",
+        "PORT": "5432",
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -151,16 +149,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+STATIC_URL = "/static/"
+django_heroku.settings(locals())
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "localhost"
-EMAIL_PORT = 1025
 DEFAULT_FROM_EMAIL = "noreply@filmfilia.com"
 
 FRONTEND_URL = "http://localhost:3000/"
@@ -169,3 +164,8 @@ FRONTEND_URL = "http://localhost:3000/"
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+try:
+    from .local_settings import *
+except ImportError:
+    pass
